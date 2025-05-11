@@ -11,7 +11,7 @@ if (!defined("WHMCS")) {
 function hostedai_MetaData()
 {
     return array(
-        'DisplayName' => 'HosteDai',
+        'DisplayName' => 'hosted·ai',
         'APIVersion' => '1.0', // Use API Version 1.1
         'RequiresServer' => true, // Set true if module requires a server to work
     );
