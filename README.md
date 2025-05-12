@@ -195,3 +195,17 @@ Once all the products you wish to offer have been configured and saved you will 
 Now you can go to the user panel and check your products, if you want to change anything return to the Products/Services area.
 
 ![image](https://github.com/user-attachments/assets/b04a4185-a5b1-4ae5-b43a-2db1a35f591f)
+
+### Managing active teams
+For users with an active product associated with the model by navigating to the Products/Services tab in the clients section you can get an overview of the resource usage, and perform actions such as managing the account status by suspending, unsuspending and terminating the product.
+<img width="1042" alt="image" src="https://github.com/user-attachments/assets/353b403e-b69b-4ea9-b0bc-1fc62fa33e6e" />
+
+### Invoicing
+
+For products configured with the 'one time' type, invoices will be generated and issued based on any pricing set within the assigned pricing policy.
+<img width="983" alt="image" src="https://github.com/user-attachments/assets/79fb24e9-3674-466c-9710-87b6b8ef5ee3" />
+
+
+
+
+
