@@ -57,7 +57,7 @@ class Helper
         try {
             $endPoint = 'team';
             $curlResponse = $this->curlCall("POST", $apiData, "createHostedaiTeam", $endPoint);
-
+            
             return $curlResponse;
 
         } catch(Exception $e) {
@@ -181,6 +181,21 @@ class Helper
             return $results;
         } catch (Exception $e) {
             logActivity('Unable to generate invoice for user '.$id.', WHMCS LOCAL API ERROR: ', $e->getMessage());
+        }
+    }
+
+    /** Change package based on teamID */
+    public function changeHostedaiTeamPackage($pricing_id , $data)
+    {
+        try {
+            $endPoint = 'pricing-policy/' . $pricing_id . '/update-teams';
+
+            $curlResponse = $this->curlCall("PUT", $data, "changeHostedaiTeamPackage", $endPoint);
+    
+            return $curlResponse;
+
+        } catch(Exception $e) {
+            logActivity('Failed to Change hostedai team package, Error: ', $e->getMessage());
         }
     }
 
