@@ -17,11 +17,11 @@
                                 <h3>{$key|upper}</h3>
                             </div>
                             <div class="overview-card-detail">
-                                <p>{$item->used} <b>{if $key == 'cores'} {$LANG['cores']} {elseif $key == 'gpus'} {$LANG['no_of_cards']} {else} {$LANG['storage_GB']} {/if}</b> {$LANG['infinity']}</p>
-                                <p>{if $item->available == -1} {$LANG['unlimited']} {/if}</p>
+                                <p>{$item->used} <b>{if $key == 'cores'} {$LANG['cores']} {elseif $key == 'gpus'} {$LANG['no_of_cards']} {else} {$LANG['storage_GB']} {/if}</b> {if $item->available == -1} {$LANG['infinity']} {else} ({$item->percent}%) {/if}</p>
+                                <p>{if $item->available == -1} {$LANG['unlimited']} {else} {$item->available}{if $key == 'cores'} {$LANG['cores']} {elseif $key == 'gpus'} {$LANG['no_of_cards']} {else} {$LANG['storage_GB']} {/if} {/if}</p>
                             </div>
                             <div class="progress">
-                                <div class="progress-bar" role="progressbar" aria-valuenow="{$item->used}" aria-valuemin="{$item->used}" aria-valuemax="{$item->used}" style="width:{$item->used}%">{$item->used}%</div>
+                                <div class="progress-bar" role="progressbar" aria-valuenow="{$item->percent}" aria-valuemin="{$item->percent}" aria-valuemax="{$item->percent}" style="width:{$item->percent}%">{$item->percent}%</div>
                             </div>
                         </div>
                     </div>

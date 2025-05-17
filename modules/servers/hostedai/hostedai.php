@@ -222,13 +222,13 @@ function hostedai_TestConnection(array $params)
     try {
 
         $helper = new Helper($params);
-        $response = $helper->getHostedaiApiToken($params);
-        if($response['httpcode'] == 200){
+        $getPricingPolicy = $helper->getPolicyItems('pricing-policy');
+        if($getPricingPolicy['httpcode'] == 200){
          
             $success = true;
         }
         else{
-            $errorMsg = $response['result']->message;
+            $errorMsg = $getPricingPolicy['result']->message;
         }
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
@@ -466,8 +466,20 @@ function hostedai_TerminateAccount(array $params)
 function hostedai_ChangePackage(array $params)
 {
     try {
-        
-        
+        $helper = new Helper($params);
+        $pricing_policy_id = $params['configoption1'];
+        $teamData = [
+            "teams" => [$params['customfields']['team_id']]
+        ];
+
+
+        $changePackage = $helper->changeHostedaiTeamPackage($pricing_policy_id, $teamData); 
+        if($changePackage['httpcode'] == 200 && $changePackage['result']->status == 'success') {
+            return 'success';
+        } else {
+            return $changePackage['result']->message;
+        }
+
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
@@ -481,7 +493,6 @@ function hostedai_ChangePackage(array $params)
         return $e->getMessage();
     }
 
-    return 'success';
 }
 
 
@@ -557,13 +568,16 @@ function hostedai_AdminServicesTabFields(array $params)
                         $resourceHTML = '';
             
                         foreach ($resourceOverviewData as $resourceType => $resource) {
+
                             $used = $resource->used;
                             $available = $resource->available;
-            
-                            if($available == -1) {
-                                $aval = 'unlimited';
+
+                            if($available > 0) {
+                                $percentage = $used/$available;
+                            } else {
+                                $percentage = 0;
                             }
-                            
+            
                             if ($resourceType == 'cores') {
                                 $unit = 'Cores';
                             } elseif ($resourceType == 'gpus') {
@@ -571,7 +585,15 @@ function hostedai_AdminServicesTabFields(array $params)
                             } else {
                                 $unit = 'GB';
                             }
-            
+
+                            if($available == -1) {
+                                $aval = 'Unlimited';
+                                $used = $resource->used . " " . $unit.  ' (∞)';
+                            } else {
+                                $aval = $available . " " . $unit;
+                                $used = $resource->used . " " . $unit . " (".$percentage."%)";
+                            }
+                            
                             $imagePath = $CONFIG['SystemURL'] . "/modules/servers/hostedai/assets/images/".$resourceType.".svg";
             
                             $resourceHTML .= '<div class="col-lg-6 mt-2">
@@ -581,11 +603,11 @@ function hostedai_AdminServicesTabFields(array $params)
                                             <h3>'.strtoupper($resourceType).'</h3>
                                         </div>
                                         <div class="overview-card-detail">
-                                            <p>'.$used.' <b>'.$unit.'</b> (∞)</p>
+                                            <p>'.$used.'</p>
                                             <p>'.$aval.'</p>
                                         </div>
                                         <div class="progress">
-                                            <div class="progress-bar" role="progressbar" aria-valuenow="'.$used.'" aria-valuemin="'.$used.'" aria-valuemax="'.$used.'" style="width:'.$used.'%">'.$used.'%</div>
+                                            <div class="progress-bar" role="progressbar" aria-valuenow="'.$percentage.'" aria-valuemin="'.$percentage.'" aria-valuemax="'.$percentage.'" style="width:'.$percentage.'%">'.$percentage.'%</div>
                                         </div>
                                     </div>
                                 </div>';
@@ -713,6 +735,14 @@ function hostedai_ClientArea(array $params)
                 if($getResourceOverview['httpcode'] == 200) {
     
                     $resourceOverviewData = $getResourceOverview['result'];
+
+                    foreach ($resourceOverviewData as $key => $resource) {
+                        if (isset($resource->available) && $resource->available > 0) {
+                            $resource->percent = ($resource->used / $resource->available) * 100;
+                        } else {
+                            $resource->percent = 0;
+                        }
+                    }
             
                     return array(
                         'templatefile' => $templateFile,
