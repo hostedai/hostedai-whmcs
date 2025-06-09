@@ -468,16 +468,14 @@ function hostedai_ChangePackage(array $params)
     try {
         $helper = new Helper($params);
         $pricing_policy_id = $params['configoption1'];
-        $teamData = [
-            "teams" => [$params['customfields']['team_id']]
-        ];
+        $resource_policy_id = $params['configoption2'];
+        $teamId = $params['customfields']['team_id'];
 
-
-        $changePackage = $helper->changeHostedaiTeamPackage($pricing_policy_id, $teamData); 
-        if($changePackage['httpcode'] == 200 && $changePackage['result']->status == 'success') {
+        $changePackage = $helper->changeHostedaiTeamPackage($pricing_policy_id, $resource_policy_id, $teamId); 
+        if($changePackage['status'] == 'success') {
             return 'success';
         } else {
-            return $changePackage['result']->message;
+            return $changePackage['message'];
         }
 
     } catch (Exception $e) {
@@ -573,7 +571,7 @@ function hostedai_AdminServicesTabFields(array $params)
                             $available = $resource->available;
 
                             if($available > 0) {
-                                $percentage = $used/$available;
+                                $percentage = ($used/$available)*100;
                             } else {
                                 $percentage = 0;
                             }

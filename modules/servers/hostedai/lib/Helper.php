@@ -25,8 +25,11 @@ class Helper
             $servername = Capsule::table('tblservers')->where('type', 'hostedai')->value('hostname');
         }
 
+
+
         $this->baseUrl = "https://" . $servername . "/api/";
 
+ 
         $this->token = $params['serverpassword'];
         if ($this->token == '') {
             $password = Capsule::table('tblservers')->where('type', 'hostedai')->value('password');
@@ -180,18 +183,66 @@ class Helper
     }
 
     /** Change package based on teamID */
-    public function changeHostedaiTeamPackage($pricing_id, $data)
+    public function changeHostedaiTeamPackage($pricing_id, $resource_id, $teamId)
     {
         try {
-            $endPoint = 'pricing-policy/' . $pricing_id . '/update-teams';
 
-            $curlResponse = $this->curlCall("PUT", $data, "changeHostedaiTeamPackage", $endPoint);
+            $updatePricingPolicy = $this->updatePricing($pricing_id, $teamId); 
+            $updateResourcePolicy = $this->updateResource($resource_id, $teamId);
+
+            if($updatePricingPolicy['httpcode'] == 200 && $updateResourcePolicy['httpcode'] == 200) {
+                return [
+                    'status' => 'success',
+                    'message' => 'Team package updated successfully.',
+                ];
+            } else {
+                return [
+                    'status' => 'error',
+                    'message' => 'Error to change the team package.',
+                ];
+            }
+
+        } catch (Exception $e) {
+            logActivity('Failed to Change hostedai team package ID:' .$teamId.  ', Error: ', $e->getMessage());
+        }
+    }
+
+
+    /* Update pricing */
+    public function updatePricing($pricing_id, $team_id)
+    {
+        try {
+            $endPoint = 'pricing-policy/'. $pricing_id .'/assign-team';
+
+            $data = ["team_id" => $team_id];
+
+            $curlResponse = $this->curlCall("POST", $data, "updatePricing", $endPoint);
 
             return $curlResponse;
+
         } catch (Exception $e) {
             logActivity('Failed to Change hostedai team package, Error: ', $e->getMessage());
         }
     }
+
+
+    /* Update resource */
+    public function updateResource($resource_id, $team_id)
+    {
+        try {
+            $endPoint = 'resource-policy/assign-team';
+
+            $data = ["policy_id" => $resource_id, "team_id" => $team_id];
+
+            $curlResponse = $this->curlCall("POST", $data, "updateResource", $endPoint);
+            
+            return $curlResponse;
+
+        } catch (Exception $e) {
+            logActivity('Failed to Change hostedai team package, Error: ', $e->getMessage());
+        }
+    }
+
 
     /* Suspend or Terminate Hostedai Service */
     public function suspendTerminate_service($serviceId, $pid, $command)
