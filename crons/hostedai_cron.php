@@ -34,6 +34,16 @@ try {
                 $itemCount = 1;
                 $totalWithoutTax = 0;
 
+                // Add monthly base cost if available
+                if (isset($responseData->monthly_cost) && $responseData->monthly_cost > 0) {
+                    $monthlyCost = number_format($responseData->monthly_cost, 2);
+                    $invoiceItems["itemdescription{$itemCount}"] = "Monthly Base Service Fee";
+                    $invoiceItems["itemamount{$itemCount}"] = $monthlyCost;
+                    $invoiceItems["itemtaxed{$itemCount}"] = true;
+                    $totalWithoutTax += $responseData->monthly_cost;
+                    $itemCount++;
+                }
+
                 foreach ($responseData->billing_by_workspace as $workspace) {
                     $workspaceName = $workspace->workspace_name;
                     if (empty($workspace->instances)) {
@@ -41,7 +51,8 @@ try {
                     }
                 
                     foreach ($workspace->instances as $instanceId => $instanceData) {
-                        $monthData = reset($instanceData);
+                        $instanceArray = (array)$instanceData;
+                        $monthData = reset($instanceArray);
                 
                         $cpu = number_format($monthData->CPU, 2);
                         $ram = number_format($monthData->RAM, 2);
@@ -63,14 +74,42 @@ try {
                         $totalWithoutTax += $monthData->total_cost;
                         $itemCount++;
                     }
+
+                // Add GPUaaS pool billing (if available)
+                if (!empty($responseData->gpuaas_billing_by_pool)) {
+                    foreach ($responseData->gpuaas_billing_by_pool as $poolId => $poolData) {
+                        $poolName = $poolData->pool_name;
+                        $intervalsArray = (array)$poolData->intervals;
+                        $interval = reset($intervalsArray);
+
+                        $gpuCost = number_format($interval->Cost_Of_GPUConsumed, 2);
+                        $vramCost = number_format($interval->Cost_Of_vRAMConsumed, 2);
+                        $tflopsCost = number_format($interval->Cost_Of_TotalTFlopsConsumed, 2);
+                        $totalCost = number_format($interval->total_cost, 2);
+
+                        $description = <<<DESC
+                        GPU Pool: {$poolName}
+                        GPU ..................................... \$ {$gpuCost}
+                        vRAM .................................... \$ {$vramCost}
+                        TFlops .................................. \$ {$tflopsCost}
+                        DESC;
+
+                        $invoiceItems["itemdescription{$itemCount}"] = $description;
+                        $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                        $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                        $totalWithoutTax += $interval->total_cost;
+                        $itemCount++;
+                    }
                 }
+            }
 
                 // Generate Invoice
                 $invoiceResult = $helper->createInvoice($team->uid, $invoiceItems);
                 logActivity("Invoice creation response for UID {$team->uid}: " . json_encode($invoiceResult));
                 if (isset($invoiceResult['result']) && $invoiceResult['result'] === 'success') {
                     $helper->insert_teamDetail($team->uid, $team->sid, $team->pid, $invoiceResult['invoiceid'], "update");
-                    logActivity("Invoice created for UID {$team->uid} - Invoice ID: {$invoiceResult['invoiceid']} - Amount: {$amount}");
+                    logActivity("Invoice created for UID {$team->uid} - Invoice ID: {$invoiceResult['invoiceid']} - Amount: {$totalWithoutTax}");
                 } else {
                     logActivity("Failed to create invoice for UID {$team->uid}: " . json_encode($invoiceResult));
                 }
