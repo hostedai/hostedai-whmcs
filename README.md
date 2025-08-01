@@ -150,6 +150,9 @@ Set up one-time products in WHMCS for services billed based on actual customer u
 
 You will need to set up a custom cron job to generate bills and create invoices, typically on the 1st of the month, using the hostedai\_cron.php. The cron job should calculate billing based on the customer's actual usage data from hosted·ai.
 
+For example:
+0 0 * * * /usr/bin/php8.3 /var/www/clients/client1/web1/web/crons/hostedai_cron.php
+
 ![image](https://github.com/user-attachments/assets/2660bcf7-6b6c-48a2-82aa-cc9767ae40ef)
 
 Now you can select the hosted·ai specific details
