@@ -42,10 +42,14 @@ class InvoiceTestUtility {
                         'instances' => (object)[
                             'instance-1' => (object)[
                                 '2025-01' => (object)[
-                                    'CPU' => 10.50,
-                                    'RAM' => 5.25,
-                                    'Disk Storage' => 2.75,
-                                    'total_cost' => 18.50
+                                    'Cost_Of_CPU' => 10.50,
+                                    'Cost_Of_RAM' => 5.25,
+                                    'Cost_Of_Disk_Storage' => 2.75,
+                                    'Cost_Of_GPU' => 0.00,
+                                    'Cost_Of_NetworkIn' => 1.25,
+                                    'Cost_Of_NetworkOut' => 0.75,
+                                    'Cost_of_Public_IP' => 2.50,
+                                    'total_cost' => 22.75
                                 ]
                             ]
                         ]
@@ -277,6 +281,172 @@ class InvoiceTestUtility {
             'expected_total' => 100100.00,
             'expected_descriptions' => ['Monthly Base Service Fee', 'Workspace: Enterprise Workspace', 'GPU Pool: Enterprise GPU Cluster']
         ];
+
+        // Test Case 9: Shared Storage Billing
+        $this->testCases['shared_storage_billing'] = [
+            'description' => 'Shared storage volumes billing',
+            'data' => (object)[
+                'billing_by_workspace' => (object)[],
+                'gpuaas_billing_by_pool' => (object)[],
+                'monthly_cost' => 25.00
+            ],
+            'shared_storage_data' => (object)[
+                'team_id' => 'team-123',
+                'total_billing' => 150.75,
+                'currency_code' => 'USD',
+                'currency_symbol' => '$',
+                'details' => (object)[
+                    'shared-volume-1' => (object)[
+                        '2025-01' => (object)[
+                            'cost' => 75.50,
+                            'hours' => 744.0
+                        ]
+                    ],
+                    'shared-volume-2' => (object)[
+                        '2025-01' => (object)[
+                            'cost' => 75.25,
+                            'hours' => 744.0
+                        ]
+                    ]
+                ]
+            ],
+            'expected_items' => 3,
+            'expected_total' => 175.75,
+            'expected_descriptions' => ['Monthly Base Service Fee', 'Shared Storage: shared-volume-1', 'Shared Storage: shared-volume-2']
+        ];
+
+        // Test Case 10: Enhanced GPUaaS Pool with Ephemeral Storage
+        $this->testCases['enhanced_gpuaas_ephemeral'] = [
+            'description' => 'GPUaaS pools with ephemeral storage billing',
+            'data' => (object)[
+                'billing_by_workspace' => (object)[],
+                'gpuaas_billing_by_pool' => (object)[],
+                'monthly_cost' => 30.00
+            ],
+            'enhanced_gpuaas_data' => (object)[
+                'team_id' => 'team-456',
+                'total_billing' => 425.80,
+                'current_month_total_cost' => 425.80,
+                'currency_code' => 'USD',
+                'currency_symbol' => '$',
+                'details' => (object)[
+                    'ml-training-pool' => (object)[
+                        'model_type' => 'A100',
+                        'vendor_type' => 'NVIDIA',
+                        'pool_id' => 101,
+                        'pool_name' => 'ML Training Pool',
+                        'total_cost' => 425.80,
+                        'intervals' => (object)[
+                            '2025-01' => (object)[
+                                'GPU' => (object)['cost' => 200.00],
+                                'vRAM' => (object)['cost' => 75.00],
+                                'SubscriptionRate' => (object)['cost' => 100.00],
+                                'EphimeralStorage' => (object)['cost' => 35.80],
+                                'CPU' => (object)['cost' => 10.00],
+                                'RAM' => (object)['cost' => 5.00],
+                                'interval_cost' => 425.80,
+                                'interval_hours' => 744.0
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'expected_items' => 2,
+            'expected_total' => 455.80,
+            'expected_descriptions' => ['Monthly Base Service Fee', 'GPU Pool: ML Training Pool']
+        ];
+
+        // Test Case 11: Complete Integration (All Billing Types)
+        $this->testCases['complete_integration'] = [
+            'description' => 'Complete billing with instances, GPU pools, shared storage, and ephemeral storage',
+            'data' => (object)[
+                'billing_by_workspace' => (object)[
+                    'workspace-1' => (object)[
+                        'workspace_name' => 'Full Stack Workspace',
+                        'instances' => (object)[
+                            'instance-1' => (object)[
+                                '2025-01' => (object)[
+                                    'Cost_Of_CPU' => 25.00,
+                                    'Cost_Of_RAM' => 15.00,
+                                    'Cost_Of_Disk_Storage' => 10.00,
+                                    'Cost_Of_GPU' => 50.00,
+                                    'Cost_Of_NetworkIn' => 5.00,
+                                    'Cost_Of_NetworkOut' => 3.00,
+                                    'Cost_of_Public_IP' => 7.00,
+                                    'total_cost' => 115.00
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                'gpuaas_billing_by_pool' => (object)[],
+                'monthly_cost' => 50.00,
+                'pci_devices' => (object)[
+                    'total_billing' => 125.50,
+                    'pci_devices' => (object)[
+                        'gpu-card-1' => (object)[
+                            '2025-01-01' => (object)[
+                                'total_hours' => 24.0,
+                                'total_cost' => 125.50,
+                                'vm_usage' => [
+                                    (object)['VMID' => 'vm-123', 'Hours' => 24.0, 'Cost' => 125.50]
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                'team_metrics' => (object)[
+                    '2025-01' => (object)[
+                        'RAM' => 15.25,
+                        'CPU' => 8.75,
+                        'GPU' => 25.50,
+                        'GRAM' => 12.00,
+                        'TFlops' => 18.25,
+                        'total_cost' => 79.75
+                    ]
+                ]
+            ],
+            'shared_storage_data' => (object)[
+                'details' => (object)[
+                    'shared-data-volume' => (object)[
+                        '2025-01' => (object)[
+                            'cost' => 45.25,
+                            'hours' => 744.0
+                        ]
+                    ]
+                ]
+            ],
+            'enhanced_gpuaas_data' => (object)[
+                'details' => (object)[
+                    'enterprise-gpu-pool' => (object)[
+                        'model_type' => 'H100',
+                        'vendor_type' => 'NVIDIA',
+                        'intervals' => (object)[
+                            '2025-01' => (object)[
+                                'GPU' => (object)['cost' => 300.00],
+                                'vRAM' => (object)['cost' => 150.00],
+                                'SubscriptionRate' => (object)['cost' => 200.00],
+                                'EphimeralStorage' => (object)['cost' => 85.75],
+                                'CPU' => (object)['cost' => 25.00],
+                                'RAM' => (object)['cost' => 15.00],
+                                'interval_cost' => 775.75,
+                                'interval_hours' => 744.0
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'expected_items' => 7,
+            'expected_total' => 1191.25,
+            'expected_descriptions' => [
+                'Monthly Base Service Fee', 
+                'Workspace: Full Stack Workspace', 
+                'GPU Card: gpu-card-1',
+                'Team-Level Resource Usage',
+                'Shared Storage: shared-data-volume',
+                'GPU Pool: enterprise-gpu-pool'
+            ]
+        ];
     }
     
     /**
@@ -309,9 +479,14 @@ class InvoiceTestUtility {
                     $instanceArray = (array)$instanceData;
                     $monthData = reset($instanceArray);
             
-                    $cpu = number_format($monthData->CPU, 2);
-                    $ram = number_format($monthData->RAM, 2);
-                    $disk = number_format($monthData->{'Disk Storage'}, 2);
+                    // Enhanced cost breakdown with new fields
+                    $cpu = number_format($monthData->Cost_Of_CPU ?? $monthData->CPU ?? 0, 2);
+                    $ram = number_format($monthData->Cost_Of_RAM ?? $monthData->RAM ?? 0, 2);
+                    $disk = number_format($monthData->Cost_Of_Disk_Storage ?? $monthData->{'Disk Storage'} ?? 0, 2);
+                    $gpu = number_format($monthData->Cost_Of_GPU ?? 0, 2);
+                    $networkIn = number_format($monthData->Cost_Of_NetworkIn ?? 0, 2);
+                    $networkOut = number_format($monthData->Cost_Of_NetworkOut ?? 0, 2);
+                    $publicIP = number_format($monthData->Cost_of_Public_IP ?? 0, 2);
                     $instanceTotal = number_format($monthData->total_cost, 2);
             
                     $description = <<<DESC
@@ -320,6 +495,10 @@ class InvoiceTestUtility {
                     CPU ………………………………………………………… \$ {$cpu}
                     RAM ………………………………………………………… \$ {$ram}
                     Disk Storage ………………………………………… \$ {$disk}
+                    GPU ………………………………………………………… \$ {$gpu}
+                    Network In ……………………………………………… \$ {$networkIn}
+                    Network Out …………………………………………… \$ {$networkOut}
+                    Public IP ……………………………………………… \$ {$publicIP}
                     DESC;
             
                     $invoiceItems["itemdescription{$itemCount}"] = $description;
@@ -357,6 +536,215 @@ class InvoiceTestUtility {
 
                 $totalWithoutTax += $interval->total_cost;
                 $itemCount++;
+            }
+        }
+
+        return [
+            'items' => $invoiceItems,
+            'total' => $totalWithoutTax,
+            'item_count' => $itemCount - 1
+        ];
+    }
+
+    /**
+     * Simulate the enhanced invoice generation logic including shared storage and ephemeral storage
+     */
+    private function generateEnhancedInvoiceItems($testCase) {
+        $responseData = $testCase['data'];
+        $invoiceItems = [];
+        $itemCount = 1;
+        $totalWithoutTax = 0;
+
+        // Add monthly base cost if available
+        if (isset($responseData->monthly_cost) && $responseData->monthly_cost > 0) {
+            $monthlyCost = number_format($responseData->monthly_cost, 2);
+            $invoiceItems["itemdescription{$itemCount}"] = "Monthly Base Service Fee";
+            $invoiceItems["itemamount{$itemCount}"] = $monthlyCost;
+            $invoiceItems["itemtaxed{$itemCount}"] = true;
+            $totalWithoutTax += $responseData->monthly_cost;
+            $itemCount++;
+        }
+
+        // Process workspace billing
+        if (isset($responseData->billing_by_workspace)) {
+            foreach ($responseData->billing_by_workspace as $workspace) {
+                $workspaceName = $workspace->workspace_name ?? 'Unknown Workspace';
+                if (empty($workspace->instances)) {
+                    continue;
+                }
+            
+                foreach ($workspace->instances as $instanceId => $instanceData) {
+                    $instanceArray = (array)$instanceData;
+                    $monthData = reset($instanceArray);
+            
+                    // Enhanced cost breakdown with new fields
+                    $cpu = number_format($monthData->Cost_Of_CPU ?? $monthData->CPU ?? 0, 2);
+                    $ram = number_format($monthData->Cost_Of_RAM ?? $monthData->RAM ?? 0, 2);
+                    $disk = number_format($monthData->Cost_Of_Disk_Storage ?? $monthData->{'Disk Storage'} ?? 0, 2);
+                    $gpu = number_format($monthData->Cost_Of_GPU ?? 0, 2);
+                    $networkIn = number_format($monthData->Cost_Of_NetworkIn ?? 0, 2);
+                    $networkOut = number_format($monthData->Cost_Of_NetworkOut ?? 0, 2);
+                    $publicIP = number_format($monthData->Cost_of_Public_IP ?? 0, 2);
+                    $instanceTotal = number_format($monthData->total_cost, 2);
+            
+                    $description = <<<DESC
+                    Workspace: {$workspaceName}
+                    Instance ID: {$instanceId}
+                    CPU ………………………………………………………… \$ {$cpu}
+                    RAM ………………………………………………………… \$ {$ram}
+                    Disk Storage ………………………………………… \$ {$disk}
+                    GPU ………………………………………………………… \$ {$gpu}
+                    Network In ……………………………………………… \$ {$networkIn}
+                    Network Out …………………………………………… \$ {$networkOut}
+                    Public IP ……………………………………………… \$ {$publicIP}
+                    DESC;
+            
+                    $invoiceItems["itemdescription{$itemCount}"] = $description;
+                    $invoiceItems["itemamount{$itemCount}"] = $instanceTotal;
+                    $invoiceItems["itemtaxed{$itemCount}"] = true;
+            
+                    $totalWithoutTax += $monthData->total_cost;
+                    $itemCount++;
+                }
+            }
+        }
+
+        // Add PCI Device (GPU Card) billing (if available)
+        if (!empty($responseData->pci_devices) && isset($responseData->pci_devices->pci_devices)) {
+            foreach ($responseData->pci_devices->pci_devices as $cardId => $cardData) {
+                $intervalsArray = (array)$cardData;
+                $interval = reset($intervalsArray);
+                
+                $totalHours = number_format($interval->total_hours ?? 0, 2);
+                $totalCost = number_format($interval->total_cost ?? 0, 2);
+                
+                // Get VM usage details
+                $vmUsageDetails = '';
+                if (!empty($interval->vm_usage)) {
+                    foreach ($interval->vm_usage as $vmUsage) {
+                        $vmId = $vmUsage->VMID ?? 'Unknown';
+                        $vmHours = number_format($vmUsage->Hours ?? 0, 2);
+                        $vmCost = number_format($vmUsage->Cost ?? 0, 2);
+                        $vmUsageDetails .= "\n                        VM {$vmId}: {$vmHours} hrs (\${$vmCost})";
+                    }
+                }
+
+                $description = <<<DESC
+                GPU Card: {$cardId}
+                Total Hours ............................. {$totalHours} hrs{$vmUsageDetails}
+                DESC;
+
+                $invoiceItems["itemdescription{$itemCount}"] = $description;
+                $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                $totalWithoutTax += $interval->total_cost;
+                $itemCount++;
+            }
+        }
+
+        // Add Team Metrics billing (if available)
+        if (!empty($responseData->team_metrics)) {
+            $teamMetricsArray = (array)$responseData->team_metrics;
+            $teamMetricsInterval = reset($teamMetricsArray);
+            
+            $teamRAM = number_format($teamMetricsInterval->RAM ?? 0, 2);
+            $teamCPU = number_format($teamMetricsInterval->CPU ?? 0, 2);
+            $teamGPU = number_format($teamMetricsInterval->GPU ?? 0, 2);
+            $teamGRAM = number_format($teamMetricsInterval->GRAM ?? 0, 2);
+            $teamTFlops = number_format($teamMetricsInterval->TFlops ?? 0, 2);
+            $teamTotal = number_format($teamMetricsInterval->total_cost ?? 0, 2);
+
+            if ($teamTotal > 0) {
+                $description = <<<DESC
+                Team-Level Resource Usage
+                RAM ..................................... \$ {$teamRAM}
+                CPU ..................................... \$ {$teamCPU}
+                GPU ..................................... \$ {$teamGPU}
+                GRAM .................................... \$ {$teamGRAM}
+                TFlops .................................. \$ {$teamTFlops}
+                DESC;
+
+                $invoiceItems["itemdescription{$itemCount}"] = $description;
+                $invoiceItems["itemamount{$itemCount}"] = $teamTotal;
+                $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                $totalWithoutTax += $teamMetricsInterval->total_cost;
+                $itemCount++;
+            }
+        }
+
+        // Add Shared Storage billing (if available)
+        if (isset($testCase['shared_storage_data'])) {
+            $sharedStorageData = $testCase['shared_storage_data'];
+            
+            if (isset($sharedStorageData->details) && !empty($sharedStorageData->details)) {
+                foreach ($sharedStorageData->details as $volumeName => $volumeData) {
+                    $volumeArray = (array)$volumeData;
+                    $interval = reset($volumeArray);
+                    
+                    $cost = number_format($interval->cost ?? 0, 2);
+                    $hours = number_format($interval->hours ?? 0, 2);
+                    
+                    if ($cost > 0) {
+                        $description = <<<DESC
+                        Shared Storage: {$volumeName}
+                        Hours ................................... {$hours} hrs
+                        Cost .................................... \$ {$cost}
+                        DESC;
+
+                        $invoiceItems["itemdescription{$itemCount}"] = $description;
+                        $invoiceItems["itemamount{$itemCount}"] = $cost;
+                        $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                        $totalWithoutTax += $interval->cost;
+                        $itemCount++;
+                    }
+                }
+            }
+        }
+
+        // Add Enhanced GPUaaS Pool billing with Ephemeral Storage (if available)
+        if (isset($testCase['enhanced_gpuaas_data'])) {
+            $gpuaasPoolData = $testCase['enhanced_gpuaas_data'];
+            
+            if (isset($gpuaasPoolData->details) && !empty($gpuaasPoolData->details)) {
+                foreach ($gpuaasPoolData->details as $poolName => $poolData) {
+                    $intervalsArray = (array)$poolData->intervals;
+                    $interval = reset($intervalsArray);
+                    
+                    $gpuCost = number_format($interval->GPU->cost ?? 0, 2);
+                    $vramCost = number_format($interval->vRAM->cost ?? 0, 2);
+                    $subscriptionCost = number_format($interval->SubscriptionRate->cost ?? 0, 2);
+                    $ephemeralStorageCost = number_format($interval->EphimeralStorage->cost ?? 0, 2);
+                    $cpuCost = number_format($interval->CPU->cost ?? 0, 2);
+                    $ramCost = number_format($interval->RAM->cost ?? 0, 2);
+                    $intervalHours = number_format($interval->interval_hours ?? 0, 2);
+                    $totalCost = number_format($interval->interval_cost ?? 0, 2);
+
+                    if ($totalCost > 0) {
+                        $modelType = $poolData->model_type ?? 'Unknown';
+                        $vendorType = $poolData->vendor_type ?? 'Unknown';
+                        
+                        $description = <<<DESC
+                        GPU Pool: {$poolName} ({$modelType} - {$vendorType})
+                        GPU Subscription ........................ \$ {$subscriptionCost}
+                        GPU Usage ............................... \$ {$gpuCost}
+                        vRAM Usage .............................. \$ {$vramCost}
+                        CPU Usage ............................... \$ {$cpuCost}
+                        RAM Usage ............................... \$ {$ramCost}
+                        Ephemeral Storage ....................... \$ {$ephemeralStorageCost}
+                        Pool Hours .............................. {$intervalHours} hrs
+                        DESC;
+
+                        $invoiceItems["itemdescription{$itemCount}"] = $description;
+                        $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                        $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                        $totalWithoutTax += $interval->interval_cost;
+                        $itemCount++;
+                    }
+                }
             }
         }
 
