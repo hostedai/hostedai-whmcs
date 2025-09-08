@@ -1,10 +1,12 @@
-HostedAI Invoice Generation Test Utility - Example Output
-===========================================================
+HostedAI Enhanced Invoice Generation Test Utility - Example Output
+===================================================================
 
-🚀 Starting HostedAI Invoice Generation Tests
+🚀 Starting HostedAI Enhanced Invoice Generation Tests
 ============================================================
+✨ Now includes: Enhanced instance costs, shared storage, ephemeral storage, 
+   PCI devices, team metrics, and network costs
 
-🧪 Running Test: Missing monthly_cost field
+🧪 Running Test: Missing monthly_cost field (Enhanced)
 ------------------------------------------------------------
 ✅ PASSED
 
@@ -19,11 +21,15 @@ Instance ID: instance-1
 CPU ………………………………………………………… $ 10.50
 RAM ………………………………………………………… $ 5.25
 Disk Storage ………………………………………… $ 2.75
+GPU ………………………………………………………… $ 0.00
+Network In ……………………………………………… $ 1.25
+Network Out …………………………………………… $ 0.75
+Public IP ……………………………………………… $ 2.50
 
-Amount: $18.50 (Taxed)
+Amount: $22.75 (Taxed)
 
 ======================================================================
-TOTAL AMOUNT: $18.50 (before taxes)
+TOTAL AMOUNT: $22.75 (before taxes)
 ======================================================================
 
 🧪 Running Test: Zero monthly_cost value
@@ -263,3 +269,110 @@ Test Coverage Summary:
 ✓ Error handling for malformed data
 
 All edge cases covered successfully!
+============================================================
+🆕 ENHANCED BILLING FEATURES UPDATE
+============================================================
+
+The HostedAI WHMCS module has been enhanced to support:
+
+🔹 Enhanced Instance Cost Breakdown:
+   - CPU, RAM, Disk Storage (existing)
+   - GPU usage costs (NEW)
+   - Network In/Out costs (NEW)
+   - Public IP costs (NEW)
+
+🔹 Shared Storage Billing (NEW):
+   - Per-volume cost tracking
+   - Usage hours calculation
+   - Multiple volume support
+
+🔹 Enhanced GPUaaS Pool Billing (NEW):
+   - GPU subscription costs
+   - vRAM consumption costs
+   - Ephemeral storage costs (NEW)
+   - CPU and RAM pool usage
+   - Pool hours tracking
+
+🔹 PCI Device (GPU Card) Billing (NEW):
+   - Individual card tracking
+   - VM-specific usage
+   - Hourly cost calculation
+
+🔹 Team Metrics Integration (NEW):
+   - Team-level resource consumption
+   - RAM, CPU, GPU, GRAM, TFlops costs
+
+🔹 Policy and Currency Support (NEW):
+   - Pricing policy tracking
+   - Resource policy tracking
+   - Currency code and symbol support
+
+📋 SAMPLE ENHANCED INVOICE ITEMS:
+
+Item #1: Monthly Base Service Fee
+Amount: $50.00
+
+Item #2: Enhanced Instance Billing
+--------------------------------------------------
+Workspace: Full Stack Workspace
+Instance ID: instance-1
+CPU ………………………………………………………… $ 25.00
+RAM ………………………………………………………… $ 15.00
+Disk Storage ………………………………………… $ 10.00
+GPU ………………………………………………………… $ 50.00
+Network In ……………………………………………… $ 5.00
+Network Out …………………………………………… $ 3.00
+Public IP ……………………………………………… $ 7.00
+Amount: $115.00
+
+Item #3: Shared Storage Billing
+--------------------------------------------------
+Shared Storage: shared-data-volume
+Hours ................................... 744.00 hrs
+Cost .................................... $ 45.25
+Amount: $45.25
+
+Item #4: Enhanced GPUaaS Pool with Ephemeral Storage
+--------------------------------------------------
+GPU Pool: enterprise-gpu-pool (H100 - NVIDIA)
+GPU Subscription ........................ $ 200.00
+GPU Usage ............................... $ 300.00
+vRAM Usage .............................. $ 150.00
+CPU Usage ............................... $ 25.00
+RAM Usage ............................... $ 15.00
+Ephemeral Storage ....................... $ 85.75
+Pool Hours .............................. 744.00 hrs
+Amount: $775.75
+
+Item #5: PCI Device (GPU Card) Billing
+--------------------------------------------------
+GPU Card: gpu-card-1
+Total Hours ............................. 24.00 hrs
+                        VM vm-123: 24.00 hrs ($125.50)
+Amount: $125.50
+
+Item #6: Team-Level Resource Usage
+--------------------------------------------------
+Team-Level Resource Usage
+RAM ..................................... $ 15.25
+CPU ..................................... $ 8.75
+GPU ..................................... $ 25.50
+GRAM .................................... $ 12.00
+TFlops .................................. $ 18.25
+Amount: $79.75
+
+======================================================================
+ENHANCED TOTAL AMOUNT: $1,191.25 (before taxes)
+======================================================================
+
+🌟 INTEGRATION STATUS: COMPLETE
+   ✅ Shared Storage Billing: Working
+   ✅ Ephemeral Storage Billing: Working
+   ✅ Enhanced Instance Costs: Working
+   ✅ PCI Device Billing: Working
+   ✅ Team Metrics Billing: Working
+   ✅ Policy Information: Working
+
+============================================================
+🏁 Enhanced Billing Integration Complete! 🚀
+============================================================
