@@ -65,6 +65,78 @@ Enhanced transparency with:
 GET /team-billing/group-by-workspace/{team_id}/{start_date}/{end_date}/monthly
 ```
 
+### Shared Storage Billing Endpoint
+```
+GET /team-billing/shared-storage/{team_id}/{start_date}/{end_date}/{interval}/{region_id}
+```
+
+**Response Structure:**
+```json
+{
+  "team_id": "team-uuid",
+  "start_date": "2024-01-01",
+  "end_date": "2024-01-31", 
+  "interval": "monthly",
+  "region_id": "region-id",
+  "total_billing": 123.45,
+  "currency_code": "USD",
+  "currency_symbol": "$",
+  "details": {
+    "shared-volume-name": {
+      "2024-01": {
+        "cost": 45.67,
+        "hours": 744.0,
+        "from": "2024-01-01T00:00:00Z",
+        "to": "2024-01-31T23:59:59Z"
+      }
+    }
+  }
+}
+```
+
+### Enhanced GPUaaS Pool Billing Endpoint
+```
+GET /team-billing/gpuaas-pool/{team_id}/{start_date}/{end_date}/{interval}/{region_id}
+```
+
+**Response Structure:**
+```json
+{
+  "team_id": "team-uuid",
+  "start_date": "2024-01-01",
+  "end_date": "2024-01-31",
+  "interval": "monthly", 
+  "total_billing": 456.78,
+  "current_month_total_cost": 123.45,
+  "currency_code": "USD",
+  "currency_symbol": "$",
+  "details": {
+    "pool-name": {
+      "intervals": {
+        "2024-01": {
+          "vRAM": {"cost": 12.34, "price": 0.02, "inclusive_price": 0.005},
+          "RAM": {"cost": 23.45, "price": 0.01, "inclusive_price": 0.002},
+          "CPU": {"cost": 34.56, "price": 0.05, "inclusive_price": 0.01},
+          "GPU": {"cost": 45.67, "price": 0.50, "inclusive_price": 0.10},
+          "SubscriptionRate": {"cost": 78.90, "price": 1.00, "inclusive_price": 0.20},
+          "EphimeralStorage": {"cost": 15.67, "price": 0.03, "inclusive_price": 0.005},
+          "from": "2024-01-01T00:00:00Z",
+          "to": "2024-01-31T23:59:59Z",
+          "interval_cost": 210.59,
+          "interval_hours": 744.0
+        }
+      },
+      "model_type": "A100",
+      "pool_id": 123,
+      "pool_name": "GPU Pool A",
+      "current_month_total_cost": 123.45,
+      "total_cost": 456.78,
+      "vendor_type": "NVIDIA"
+    }
+  }
+}
+```
+
 **Response Structure:**
 ```json
 {

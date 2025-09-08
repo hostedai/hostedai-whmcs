@@ -208,6 +208,50 @@ class Helper
         }
     }
 
+    /* Get Shared Storage Billing for Team by Region */
+    public function getTeamSharedStorageBilling($teamId, $regionId = 'all', $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+            }
+
+            $endPoint = "team-billing/shared-storage/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
+
+            $curlResponse = $this->curlCall("GET", '', "getTeamSharedStorageBilling", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Get shared storage billing, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
+    /* Get GPUaaS Pool Billing for Team by Region */
+    public function getTeamGpuaasPoolBilling($teamId, $regionId = 'all', $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+            }
+
+            $endPoint = "team-billing/gpuaas-pool/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
+
+            $curlResponse = $this->curlCall("GET", '', "getTeamGpuaasPoolBilling", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Get GPUaaS pool billing, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
     /* Generate Invoice */
     public function createInvoice($id, $invoice)
     {

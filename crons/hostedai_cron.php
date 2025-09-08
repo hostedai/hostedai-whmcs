@@ -196,6 +196,81 @@ try {
                         $itemCount++;
                     }
                 }
+
+                // Add Shared Storage billing (if available)
+                $sharedStorageResponse = $helper->getTeamSharedStorageBilling($team->teamid);
+                if ($sharedStorageResponse['httpcode'] === 200 && !empty($sharedStorageResponse['result'])) {
+                    $sharedStorageData = $sharedStorageResponse['result'];
+                    logActivity("Shared storage billing for TeamID {$team->teamid}: " . json_encode($sharedStorageData));
+                    
+                    if (isset($sharedStorageData->details) && !empty($sharedStorageData->details)) {
+                        foreach ($sharedStorageData->details as $volumeName => $volumeData) {
+                            $volumeArray = (array)$volumeData;
+                            $interval = reset($volumeArray);
+                            
+                            $cost = number_format($interval->cost ?? 0, 2);
+                            $hours = number_format($interval->hours ?? 0, 2);
+                            
+                            if ($cost > 0) {
+                                $description = <<<DESC
+                                Shared Storage: {$volumeName}
+                                Hours ................................... {$hours} hrs
+                                Cost .................................... \$ {$cost}
+                                DESC;
+
+                                $invoiceItems["itemdescription{$itemCount}"] = $description;
+                                $invoiceItems["itemamount{$itemCount}"] = $cost;
+                                $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                                $totalWithoutTax += $interval->cost;
+                                $itemCount++;
+                            }
+                        }
+                    }
+                }
+
+                // Add Enhanced GPUaaS Pool billing with Ephemeral Storage (if available)
+                $gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($team->teamid);
+                if ($gpuaasPoolResponse['httpcode'] === 200 && !empty($gpuaasPoolResponse['result'])) {
+                    $gpuaasPoolData = $gpuaasPoolResponse['result'];
+                    logActivity("GPUaaS pool billing for TeamID {$team->teamid}: " . json_encode($gpuaasPoolData));
+                    
+                    if (isset($gpuaasPoolData->details) && !empty($gpuaasPoolData->details)) {
+                        foreach ($gpuaasPoolData->details as $poolName => $poolData) {
+                            $intervalsArray = (array)$poolData->intervals;
+                            $interval = reset($intervalsArray);
+                            
+                            $gpuCost = number_format($interval->GPU->cost ?? 0, 2);
+                            $vramCost = number_format($interval->vRAM->cost ?? 0, 2);
+                            $subscriptionCost = number_format($interval->SubscriptionRate->cost ?? 0, 2);
+                            $ephemeralStorageCost = number_format($interval->EphimeralStorage->cost ?? 0, 2);
+                            $cpuCost = number_format($interval->CPU->cost ?? 0, 2);
+                            $ramCost = number_format($interval->RAM->cost ?? 0, 2);
+                            $intervalHours = number_format($interval->interval_hours ?? 0, 2);
+                            $totalCost = number_format($interval->interval_cost ?? 0, 2);
+
+                            if ($totalCost > 0) {
+                                $description = <<<DESC
+                                GPU Pool: {$poolName} ({$poolData->model_type} - {$poolData->vendor_type})
+                                GPU Subscription ........................ \$ {$subscriptionCost}
+                                GPU Usage ............................... \$ {$gpuCost}
+                                vRAM Usage .............................. \$ {$vramCost}
+                                CPU Usage ............................... \$ {$cpuCost}
+                                RAM Usage ............................... \$ {$ramCost}
+                                Ephemeral Storage ....................... \$ {$ephemeralStorageCost}
+                                Pool Hours .............................. {$intervalHours} hrs
+                                DESC;
+
+                                $invoiceItems["itemdescription{$itemCount}"] = $description;
+                                $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                                $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                                $totalWithoutTax += $interval->interval_cost;
+                                $itemCount++;
+                            }
+                        }
+                    }
+                }
             }
 
                 // Generate Invoice

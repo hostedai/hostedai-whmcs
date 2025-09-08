@@ -149,7 +149,85 @@ if ($response['httpcode'] === 200) {
     echo "Response: " . json_encode($response['result']) . "\n";
 }
 
-echo "\n=== Test 2: Detailed Team Billing ===\n";
+echo "\n=== Test 2: Shared Storage Billing ===\n";
+$sharedStorageResponse = $helper->getTeamSharedStorageBilling($teamId);
+echo "HTTP Code: " . $sharedStorageResponse['httpcode'] . "\n";
+
+if ($sharedStorageResponse['httpcode'] === 200) {
+    $sharedData = $sharedStorageResponse['result'];
+    echo "✓ Shared storage billing data retrieved\n";
+    echo "✓ Team ID: " . ($sharedData->team_id ?? 'NOT FOUND') . "\n";
+    echo "✓ Region ID: " . ($sharedData->region_id ?? 'NOT FOUND') . "\n";
+    echo "✓ Total Billing: " . ($sharedData->total_billing ?? 'NOT FOUND') . "\n";
+    echo "✓ Currency: " . ($sharedData->currency_code ?? 'NOT FOUND') . "\n";
+    
+    if (isset($sharedData->details) && !empty($sharedData->details)) {
+        echo "✓ Shared storage details found\n";
+        $volumeCount = count((array)$sharedData->details);
+        echo "  - Number of shared volumes: {$volumeCount}\n";
+        
+        foreach ($sharedData->details as $volumeName => $volumeData) {
+            echo "  - Volume: {$volumeName}\n";
+            $volumeArray = (array)$volumeData;
+            $interval = reset($volumeArray);
+            echo "    - Cost: " . ($interval->cost ?? 'NOT FOUND') . "\n";
+            echo "    - Hours: " . ($interval->hours ?? 'NOT FOUND') . "\n";
+            break; // Only show first volume for brevity
+        }
+    } else {
+        echo "✗ No shared storage details found\n";
+    }
+} else {
+    echo "✗ Failed to get shared storage billing\n";
+    echo "Response: " . json_encode($sharedStorageResponse['result']) . "\n";
+}
+
+echo "\n=== Test 3: GPUaaS Pool Billing with Ephemeral Storage ===\n";
+$gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($teamId);
+echo "HTTP Code: " . $gpuaasPoolResponse['httpcode'] . "\n";
+
+if ($gpuaasPoolResponse['httpcode'] === 200) {
+    $poolData = $gpuaasPoolResponse['result'];
+    echo "✓ GPUaaS pool billing data retrieved\n";
+    echo "✓ Team ID: " . ($poolData->team_id ?? 'NOT FOUND') . "\n";
+    echo "✓ Total Billing: " . ($poolData->total_billing ?? 'NOT FOUND') . "\n";
+    echo "✓ Current Month Cost: " . ($poolData->current_month_total_cost ?? 'NOT FOUND') . "\n";
+    echo "✓ Currency: " . ($poolData->currency_code ?? 'NOT FOUND') . "\n";
+    
+    if (isset($poolData->details) && !empty($poolData->details)) {
+        echo "✓ GPUaaS pool details found\n";
+        $poolCount = count((array)$poolData->details);
+        echo "  - Number of pools: {$poolCount}\n";
+        
+        foreach ($poolData->details as $poolName => $poolInfo) {
+            echo "  - Pool: {$poolName}\n";
+            echo "    - Model Type: " . ($poolInfo->model_type ?? 'Unknown') . "\n";
+            echo "    - Vendor Type: " . ($poolInfo->vendor_type ?? 'Unknown') . "\n";
+            echo "    - Pool ID: " . ($poolInfo->pool_id ?? 'Unknown') . "\n";
+            echo "    - Total Cost: " . ($poolInfo->total_cost ?? 'Unknown') . "\n";
+            
+            if (isset($poolInfo->intervals)) {
+                $intervalsArray = (array)$poolInfo->intervals;
+                $interval = reset($intervalsArray);
+                echo "    - GPU Cost: " . ($interval->GPU->cost ?? 'NOT FOUND') . "\n";
+                echo "    - vRAM Cost: " . ($interval->vRAM->cost ?? 'NOT FOUND') . "\n";
+                echo "    - Subscription Cost: " . ($interval->SubscriptionRate->cost ?? 'NOT FOUND') . "\n";
+                echo "    - Ephemeral Storage Cost: " . ($interval->EphimeralStorage->cost ?? 'NOT FOUND') . "\n";
+                echo "    - CPU Cost: " . ($interval->CPU->cost ?? 'NOT FOUND') . "\n";
+                echo "    - RAM Cost: " . ($interval->RAM->cost ?? 'NOT FOUND') . "\n";
+                echo "    - Interval Hours: " . ($interval->interval_hours ?? 'NOT FOUND') . "\n";
+            }
+            break; // Only show first pool for brevity
+        }
+    } else {
+        echo "✗ No GPUaaS pool details found\n";
+    }
+} else {
+    echo "✗ Failed to get GPUaaS pool billing\n";
+    echo "Response: " . json_encode($gpuaasPoolResponse['result']) . "\n";
+}
+
+echo "\n=== Test 4: Detailed Team Billing ===\n";
 $detailedResponse = $helper->generateDetailedTeamBill($teamId);
 echo "HTTP Code: " . $detailedResponse['httpcode'] . "\n";
 
@@ -182,7 +260,7 @@ if ($detailedResponse['httpcode'] === 200) {
     echo "Response: " . json_encode($detailedResponse['result']) . "\n";
 }
 
-echo "\n=== Test 3: Invoice Generation Simulation ===\n";
+echo "\n=== Test 5: Invoice Generation Simulation ===\n";
 if ($response['httpcode'] === 200) {
     $responseData = $response['result'];
     $invoiceItems = [];
@@ -203,6 +281,8 @@ if ($response['httpcode'] === 200) {
     $poolsProcessed = 0;
     $pciDevicesProcessed = 0;
     $teamMetricsProcessed = 0;
+    $sharedStorageProcessed = 0;
+    $enhancedPoolsProcessed = 0;
     
     if (isset($responseData->billing_by_workspace)) {
         foreach ($responseData->billing_by_workspace as $workspace) {
@@ -247,12 +327,46 @@ if ($response['httpcode'] === 200) {
             $itemCount++;
         }
     }
+
+    // Test shared storage billing integration
+    if ($sharedStorageResponse['httpcode'] === 200 && !empty($sharedStorageResponse['result'])) {
+        $sharedStorageData = $sharedStorageResponse['result'];
+        if (isset($sharedStorageData->details) && !empty($sharedStorageData->details)) {
+            foreach ($sharedStorageData->details as $volumeName => $volumeData) {
+                $volumeArray = (array)$volumeData;
+                $interval = reset($volumeArray);
+                if (($interval->cost ?? 0) > 0) {
+                    $sharedStorageProcessed++;
+                    $totalWithoutTax += $interval->cost;
+                    $itemCount++;
+                }
+            }
+        }
+    }
+
+    // Test enhanced GPUaaS pool billing integration
+    if ($gpuaasPoolResponse['httpcode'] === 200 && !empty($gpuaasPoolResponse['result'])) {
+        $gpuaasPoolData = $gpuaasPoolResponse['result'];
+        if (isset($gpuaasPoolData->details) && !empty($gpuaasPoolData->details)) {
+            foreach ($gpuaasPoolData->details as $poolName => $poolData) {
+                $intervalsArray = (array)$poolData->intervals;
+                $interval = reset($intervalsArray);
+                if (($interval->interval_cost ?? 0) > 0) {
+                    $enhancedPoolsProcessed++;
+                    $totalWithoutTax += $interval->interval_cost;
+                    $itemCount++;
+                }
+            }
+        }
+    }
     
     echo "✓ Invoice items processed:\n";
     echo "  - Instances: {$instancesProcessed}\n";
-    echo "  - GPU Pools: {$poolsProcessed}\n";
+    echo "  - GPU Pools (standard): {$poolsProcessed}\n";
     echo "  - PCI Devices: {$pciDevicesProcessed}\n";
     echo "  - Team Metrics: {$teamMetricsProcessed}\n";
+    echo "  - Shared Storage Volumes: {$sharedStorageProcessed}\n";
+    echo "  - Enhanced GPU Pools (with ephemeral): {$enhancedPoolsProcessed}\n";
     echo "  - Total Items: " . ($itemCount - 1) . "\n";
     echo "  - Total Amount: \$" . number_format($totalWithoutTax, 2) . "\n";
     
