@@ -34,6 +34,15 @@ try {
                 $itemCount = 1;
                 $totalWithoutTax = 0;
 
+                // Log enhanced billing information
+                $pricingPolicy = $responseData->pricing_policy ?? 'Unknown';
+                $resourcePolicy = $responseData->resource_policy ?? 'Unknown';
+                $currencyCode = $responseData->currency_code ?? 'USD';
+                $currencySymbol = $responseData->currency_symbol ?? '$';
+                $currentMonthCost = $responseData->current_month_total_cost ?? 0;
+                
+                logActivity("Enhanced billing info for TeamID {$team->teamid} - Pricing Policy: {$pricingPolicy}, Resource Policy: {$resourcePolicy}, Currency: {$currencyCode}, Current Month Cost: {$currentMonthCost}");
+
                 // Add monthly base cost if available
                 if (isset($responseData->monthly_cost) && $responseData->monthly_cost > 0) {
                     $monthlyCost = number_format($responseData->monthly_cost, 2);
@@ -44,9 +53,16 @@ try {
                     $itemCount++;
                 }
 
+                // Ensure billing_by_workspace exists and is iterable
+                if (!isset($responseData->billing_by_workspace) || empty($responseData->billing_by_workspace)) {
+                    logActivity("No workspace billing data found for TeamID {$team->teamid}");
+                    continue;
+                }
+
                 foreach ($responseData->billing_by_workspace as $workspace) {
-                    $workspaceName = $workspace->workspace_name;
+                    $workspaceName = $workspace->workspace_name ?? 'Unknown Workspace';
                     if (empty($workspace->instances)) {
+                        logActivity("No instances found for workspace: {$workspaceName}");
                         continue;
                     }
                 
@@ -54,9 +70,14 @@ try {
                         $instanceArray = (array)$instanceData;
                         $monthData = reset($instanceArray);
                 
-                        $cpu = number_format($monthData->CPU, 2);
-                        $ram = number_format($monthData->RAM, 2);
-                        $disk = number_format($monthData->{'Disk Storage'}, 2);
+                        // Enhanced cost breakdown with new fields
+                        $cpu = number_format($monthData->Cost_Of_CPU ?? 0, 2);
+                        $ram = number_format($monthData->Cost_Of_RAM ?? 0, 2);
+                        $disk = number_format($monthData->Cost_Of_Disk_Storage ?? 0, 2);
+                        $gpu = number_format($monthData->Cost_Of_GPU ?? 0, 2);
+                        $networkIn = number_format($monthData->Cost_Of_NetworkIn ?? 0, 2);
+                        $networkOut = number_format($monthData->Cost_Of_NetworkOut ?? 0, 2);
+                        $publicIP = number_format($monthData->Cost_of_Public_IP ?? 0, 2);
                         $instanceTotal = number_format($monthData->total_cost, 2);
                 
                         $description = <<<DESC
@@ -65,6 +86,10 @@ try {
                                         CPU ………………………………………………………… \$ {$cpu}
                                         RAM ………………………………………………………… \$ {$ram}
                                         Disk Storage ………………………………………… \$ {$disk}
+                                        GPU ………………………………………………………… \$ {$gpu}
+                                        Network In ……………………………………………… \$ {$networkIn}
+                                        Network Out …………………………………………… \$ {$networkOut}
+                                        Public IP ……………………………………………… \$ {$publicIP}
                                         DESC;
                 
                         $invoiceItems["itemdescription{$itemCount}"] = $description;
@@ -78,20 +103,24 @@ try {
                 // Add GPUaaS pool billing (if available)
                 if (!empty($responseData->gpuaas_billing_by_pool)) {
                     foreach ($responseData->gpuaas_billing_by_pool as $poolId => $poolData) {
-                        $poolName = $poolData->pool_name;
+                        $poolName = $poolData->pool_name ?? "Pool {$poolId}";
+                        $modelType = $poolData->model_type ?? 'N/A';
+                        $vendorType = $poolData->vendor_type ?? 'N/A';
                         $intervalsArray = (array)$poolData->intervals;
                         $interval = reset($intervalsArray);
 
-                        $gpuCost = number_format($interval->Cost_Of_GPUConsumed, 2);
-                        $vramCost = number_format($interval->Cost_Of_vRAMConsumed, 2);
-                        $tflopsCost = number_format($interval->Cost_Of_TotalTFlopsConsumed, 2);
+                        $gpuCost = number_format($interval->Cost_Of_GPUConsumed ?? 0, 2);
+                        $vramCost = number_format($interval->Cost_Of_vRAMConsumed ?? 0, 2);
+                        $tflopsCost = number_format($interval->Cost_Of_TotalTFlopsConsumed ?? 0, 2);
+                        $poolHours = number_format($interval->GPU_Pool_Hours ?? 0, 2);
                         $totalCost = number_format($interval->total_cost, 2);
 
                         $description = <<<DESC
-                        GPU Pool: {$poolName}
-                        GPU ..................................... \$ {$gpuCost}
-                        vRAM .................................... \$ {$vramCost}
-                        TFlops .................................. \$ {$tflopsCost}
+                        GPU Pool: {$poolName} ({$modelType} - {$vendorType})
+                        GPU Subscription ........................ \$ {$gpuCost}
+                        vRAM Consumption ........................ \$ {$vramCost}
+                        TFlops Consumption ...................... \$ {$tflopsCost}
+                        Pool Hours .............................. {$poolHours} hrs
                         DESC;
 
                         $invoiceItems["itemdescription{$itemCount}"] = $description;
@@ -99,6 +128,71 @@ try {
                         $invoiceItems["itemtaxed{$itemCount}"] = true;
 
                         $totalWithoutTax += $interval->total_cost;
+                        $itemCount++;
+                    }
+                }
+
+                // Add PCI Device (GPU Card) billing (if available)
+                if (!empty($responseData->pci_devices) && isset($responseData->pci_devices->pci_devices)) {
+                    foreach ($responseData->pci_devices->pci_devices as $cardId => $cardData) {
+                        $intervalsArray = (array)$cardData;
+                        $interval = reset($intervalsArray);
+                        
+                        $totalHours = number_format($interval->total_hours ?? 0, 2);
+                        $totalCost = number_format($interval->total_cost ?? 0, 2);
+                        
+                        // Get VM usage details
+                        $vmUsageDetails = '';
+                        if (!empty($interval->vm_usage)) {
+                            foreach ($interval->vm_usage as $vmUsage) {
+                                $vmId = $vmUsage->VMID ?? 'Unknown';
+                                $vmHours = number_format($vmUsage->Hours ?? 0, 2);
+                                $vmCost = number_format($vmUsage->Cost ?? 0, 2);
+                                $vmUsageDetails .= "\n                        VM {$vmId}: {$vmHours} hrs (\${$vmCost})";
+                            }
+                        }
+
+                        $description = <<<DESC
+                        GPU Card: {$cardId}
+                        Total Hours ............................. {$totalHours} hrs{$vmUsageDetails}
+                        DESC;
+
+                        $invoiceItems["itemdescription{$itemCount}"] = $description;
+                        $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                        $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                        $totalWithoutTax += $interval->total_cost;
+                        $itemCount++;
+                    }
+                }
+
+                // Add Team Metrics billing (if available)
+                if (!empty($responseData->team_metrics)) {
+                    $teamMetricsArray = (array)$responseData->team_metrics;
+                    $teamMetricsInterval = reset($teamMetricsArray);
+                    
+                    $teamRAM = number_format($teamMetricsInterval->RAM ?? 0, 2);
+                    $teamCPU = number_format($teamMetricsInterval->CPU ?? 0, 2);
+                    $teamGPU = number_format($teamMetricsInterval->GPU ?? 0, 2);
+                    $teamGRAM = number_format($teamMetricsInterval->GRAM ?? 0, 2);
+                    $teamTFlops = number_format($teamMetricsInterval->TFlops ?? 0, 2);
+                    $teamTotal = number_format($teamMetricsInterval->total_cost ?? 0, 2);
+
+                    if ($teamTotal > 0) {
+                        $description = <<<DESC
+                        Team-Level Resource Usage
+                        RAM ..................................... \$ {$teamRAM}
+                        CPU ..................................... \$ {$teamCPU}
+                        GPU ..................................... \$ {$teamGPU}
+                        GRAM .................................... \$ {$teamGRAM}
+                        TFlops .................................. \$ {$teamTFlops}
+                        DESC;
+
+                        $invoiceItems["itemdescription{$itemCount}"] = $description;
+                        $invoiceItems["itemamount{$itemCount}"] = $teamTotal;
+                        $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                        $totalWithoutTax += $teamMetricsInterval->total_cost;
                         $itemCount++;
                     }
                 }

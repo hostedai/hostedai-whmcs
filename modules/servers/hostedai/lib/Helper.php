@@ -164,6 +164,50 @@ class Helper
         }
     }
 
+    /* Generate Detailed Team Bill with enhanced data */
+    public function generateDetailedTeamBill($teamid, $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+            }
+
+            $endPoint = "team-billing/" . $teamid . "/" . $start_date . "/" . $end_date . "/" . $interval;
+
+            $curlResponse = $this->curlCall("GET", '', "generateDetailedTeamBill", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Generate detailed team bill, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
+    /* Get Workspace Billing */
+    public function getWorkspaceBilling($workspaceId, $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+            }
+
+            $endPoint = "workspace-billing/" . $workspaceId . "/" . $start_date . "/" . $end_date . "/" . $interval;
+
+            $curlResponse = $this->curlCall("GET", '', "getWorkspaceBilling", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Get workspace billing, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
     /* Generate Invoice */
     public function createInvoice($id, $invoice)
     {
