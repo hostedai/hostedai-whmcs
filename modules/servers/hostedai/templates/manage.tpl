@@ -6,7 +6,7 @@
 <div class="container">
 
     <div class="panel panel-primary">
-        <div class="panel-heading"><p>Overview</p> <a href="{$loginURL}" target="_blank" class="btn btn-primary">Login</a> </div>
+        <div class="panel-heading"><p>Overview</p> <a href="{if strpos($loginURL, 'http') !== 0}https://{/if}{$loginURL}" target="_blank" class="btn btn-primary">Login</a> </div>
         <div class="panel-body overview-main">
             <div class="row">
                 {foreach from=$resourcesData key=key item=item}
