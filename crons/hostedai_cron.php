@@ -27,12 +27,16 @@ try {
             $response = $helper->generateBill($team->teamid);
             logActivity("Billing response for TeamID {$team->teamid}: " . json_encode($response));
 
-            if ($response['httpcode'] === 200) {
+            // Always initialize invoice items regardless of main billing response
+            $invoiceItems = [];
+            $itemCount = 1;
+            $totalWithoutTax = 0;
+            $currencyCode = 'USD';
+            $currencySymbol = '$';
 
+            // Process main billing data if available
+            if ($response['httpcode'] === 200) {
                 $responseData = $response['result'];
-                $invoiceItems = [];
-                $itemCount = 1;
-                $totalWithoutTax = 0;
 
                 // Log enhanced billing information
                 $pricingPolicy = $responseData->pricing_policy ?? 'Unknown';
@@ -53,11 +57,9 @@ try {
                     $itemCount++;
                 }
 
-                // Ensure billing_by_workspace exists and is iterable
-                if (!isset($responseData->billing_by_workspace) || empty($responseData->billing_by_workspace)) {
-                    logActivity("No workspace billing data found for TeamID {$team->teamid}");
-                    continue;
-                }
+                // Process workspace billing data if available
+                if (isset($responseData->billing_by_workspace) && !empty($responseData->billing_by_workspace)) {
+                    logActivity("Processing workspace billing data for TeamID {$team->teamid}");
 
                 foreach ($responseData->billing_by_workspace as $workspace) {
                     $workspaceName = $workspace->workspace_name ?? 'Unknown Workspace';
@@ -196,84 +198,95 @@ try {
                         $itemCount++;
                     }
                 }
-
-                // Add Shared Storage billing (if available)
-                $sharedStorageResponse = $helper->getTeamSharedStorageBilling($team->teamid);
-                if ($sharedStorageResponse['httpcode'] === 200 && !empty($sharedStorageResponse['result'])) {
-                    $sharedStorageData = $sharedStorageResponse['result'];
-                    logActivity("Shared storage billing for TeamID {$team->teamid}: " . json_encode($sharedStorageData));
-                    
-                    if (isset($sharedStorageData->details) && !empty($sharedStorageData->details)) {
-                        foreach ($sharedStorageData->details as $volumeName => $volumeData) {
-                            $volumeArray = (array)$volumeData;
-                            $interval = reset($volumeArray);
-                            
-                            $cost = number_format($interval->cost ?? 0, 2);
-                            $hours = number_format($interval->hours ?? 0, 2);
-                            
-                            if ($cost > 0) {
-                                $description = <<<DESC
-                                Shared Storage: {$volumeName}
-                                Hours ................................... {$hours} hrs
-                                Cost .................................... \$ {$cost}
-                                DESC;
-
-                                $invoiceItems["itemdescription{$itemCount}"] = $description;
-                                $invoiceItems["itemamount{$itemCount}"] = $cost;
-                                $invoiceItems["itemtaxed{$itemCount}"] = true;
-
-                                $totalWithoutTax += $interval->cost;
-                                $itemCount++;
-                            }
-                        }
-                    }
+                } else {
+                    logActivity("No workspace billing data found for TeamID {$team->teamid}");
                 }
-
-                // Add Enhanced GPUaaS Pool billing with Ephemeral Storage (if available)
-                $gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($team->teamid);
-                if ($gpuaasPoolResponse['httpcode'] === 200 && !empty($gpuaasPoolResponse['result'])) {
-                    $gpuaasPoolData = $gpuaasPoolResponse['result'];
-                    logActivity("GPUaaS pool billing for TeamID {$team->teamid}: " . json_encode($gpuaasPoolData));
-                    
-                    if (isset($gpuaasPoolData->details) && !empty($gpuaasPoolData->details)) {
-                        foreach ($gpuaasPoolData->details as $poolName => $poolData) {
-                            $intervalsArray = (array)$poolData->intervals;
-                            $interval = reset($intervalsArray);
-                            
-                            $gpuCost = number_format($interval->GPU->cost ?? 0, 2);
-                            $vramCost = number_format($interval->vRAM->cost ?? 0, 2);
-                            $subscriptionCost = number_format($interval->SubscriptionRate->cost ?? 0, 2);
-                            $ephemeralStorageCost = number_format($interval->EphimeralStorage->cost ?? 0, 2);
-                            $cpuCost = number_format($interval->CPU->cost ?? 0, 2);
-                            $ramCost = number_format($interval->RAM->cost ?? 0, 2);
-                            $intervalHours = number_format($interval->interval_hours ?? 0, 2);
-                            $totalCost = number_format($interval->interval_cost ?? 0, 2);
-
-                            if ($totalCost > 0) {
-                                $description = <<<DESC
-                                GPU Pool: {$poolName} ({$poolData->model_type} - {$poolData->vendor_type})
-                                GPU Subscription ........................ \$ {$subscriptionCost}
-                                GPU Usage ............................... \$ {$gpuCost}
-                                vRAM Usage .............................. \$ {$vramCost}
-                                CPU Usage ............................... \$ {$cpuCost}
-                                RAM Usage ............................... \$ {$ramCost}
-                                Ephemeral Storage ....................... \$ {$ephemeralStorageCost}
-                                Pool Hours .............................. {$intervalHours} hrs
-                                DESC;
-
-                                $invoiceItems["itemdescription{$itemCount}"] = $description;
-                                $invoiceItems["itemamount{$itemCount}"] = $totalCost;
-                                $invoiceItems["itemtaxed{$itemCount}"] = true;
-
-                                $totalWithoutTax += $interval->interval_cost;
-                                $itemCount++;
-                            }
-                        }
-                    }
-                }
+            } else {
+                logActivity("Main billing API failed for TeamID {$team->teamid} - HTTP Code: " . $response['httpcode']);
             }
 
-                // Generate Invoice
+            // ALWAYS process Shared Storage billing (regardless of main billing status)
+            $sharedStorageResponse = $helper->getTeamSharedStorageBilling($team->teamid);
+            if ($sharedStorageResponse['httpcode'] === 200 && !empty($sharedStorageResponse['result'])) {
+                $sharedStorageData = $sharedStorageResponse['result'];
+                logActivity("Shared storage billing for TeamID {$team->teamid}: " . json_encode($sharedStorageData));
+                
+                if (isset($sharedStorageData->details) && !empty($sharedStorageData->details)) {
+                    foreach ($sharedStorageData->details as $volumeName => $volumeData) {
+                        $volumeArray = (array)$volumeData;
+                        $interval = reset($volumeArray);
+                        
+                        $cost = number_format($interval->cost ?? 0, 2);
+                        $hours = number_format($interval->hours ?? 0, 2);
+                        
+                        if ($cost > 0) {
+                            $description = <<<DESC
+                            Shared Storage: {$volumeName}
+                            Hours ................................... {$hours} hrs
+                            Cost .................................... \$ {$cost}
+                            DESC;
+
+                            $invoiceItems["itemdescription{$itemCount}"] = $description;
+                            $invoiceItems["itemamount{$itemCount}"] = $cost;
+                            $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                            $totalWithoutTax += $interval->cost;
+                            $itemCount++;
+                        }
+                    }
+                }
+            } else {
+                logActivity("Shared storage billing failed or empty for TeamID {$team->teamid} - HTTP Code: " . ($sharedStorageResponse['httpcode'] ?? 'unknown'));
+            }
+
+            // ALWAYS process Enhanced GPUaaS Pool billing with Ephemeral Storage (regardless of main billing status)
+            $gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($team->teamid);
+            if ($gpuaasPoolResponse['httpcode'] === 200 && !empty($gpuaasPoolResponse['result'])) {
+                $gpuaasPoolData = $gpuaasPoolResponse['result'];
+                logActivity("GPUaaS pool billing for TeamID {$team->teamid}: " . json_encode($gpuaasPoolData));
+                
+                if (isset($gpuaasPoolData->details) && !empty($gpuaasPoolData->details)) {
+                    foreach ($gpuaasPoolData->details as $poolName => $poolData) {
+                        $intervalsArray = (array)$poolData->intervals;
+                        $interval = reset($intervalsArray);
+                        
+                        $gpuCost = number_format($interval->GPU->cost ?? 0, 2);
+                        $vramCost = number_format($interval->vRAM->cost ?? 0, 2);
+                        $subscriptionCost = number_format($interval->SubscriptionRate->cost ?? 0, 2);
+                        $ephemeralStorageCost = number_format($interval->EphimeralStorage->cost ?? 0, 2);
+                        $cpuCost = number_format($interval->CPU->cost ?? 0, 2);
+                        $ramCost = number_format($interval->RAM->cost ?? 0, 2);
+                        $intervalHours = number_format($interval->interval_hours ?? 0, 2);
+                        $totalCost = number_format($interval->interval_cost ?? 0, 2);
+
+                        if ($totalCost > 0) {
+                            $description = <<<DESC
+                            GPU Pool: {$poolName} ({$poolData->model_type} - {$poolData->vendor_type})
+                            GPU Subscription ........................ \$ {$subscriptionCost}
+                            GPU Usage ............................... \$ {$gpuCost}
+                            vRAM Usage .............................. \$ {$vramCost}
+                            CPU Usage ............................... \$ {$cpuCost}
+                            RAM Usage ............................... \$ {$ramCost}
+                            Ephemeral Storage ....................... \$ {$ephemeralStorageCost}
+                            Pool Hours .............................. {$intervalHours} hrs
+                            DESC;
+
+                            $invoiceItems["itemdescription{$itemCount}"] = $description;
+                            $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                            $invoiceItems["itemtaxed{$itemCount}"] = true;
+
+                            $totalWithoutTax += $interval->interval_cost;
+                            $itemCount++;
+                        }
+                    }
+                }
+            } else {
+                logActivity("GPUaaS pool billing failed or empty for TeamID {$team->teamid} - HTTP Code: " . ($gpuaasPoolResponse['httpcode'] ?? 'unknown'));
+            }
+
+            // Generate Invoice only if there are any costs
+            if ($totalWithoutTax > 0) {
+                logActivity("Creating invoice for TeamID {$team->teamid} with total amount: \${$totalWithoutTax}");
                 $invoiceResult = $helper->createInvoice($team->uid, $invoiceItems);
                 logActivity("Invoice creation response for UID {$team->uid}: " . json_encode($invoiceResult));
                 if (isset($invoiceResult['result']) && $invoiceResult['result'] === 'success') {
@@ -284,7 +297,7 @@ try {
                 }
 
             } else {
-                logActivity("Failed to generate bill for TeamID {$team->teamid}: " . json_encode($response));
+                logActivity("No billable costs found for TeamID {$team->teamid} - skipping invoice generation");
             }
         }
     }
