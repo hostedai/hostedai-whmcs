@@ -14,15 +14,7 @@
                         <div class="overview-card">
                             <div class="overview-card-header">
                                 <img src="{$assets}/images/{$key}.svg" alt="{$key}">
-                                <h3>
-                                    {if $key == 'shared_storage'}
-                                        SHARED STORAGE
-                                    {elseif $key == 'ephemeral_storage'}
-                                        EPHEMERAL STORAGE
-                                    {else}
-                                        {$key|upper}
-                                    {/if}
-                                </h3>
+                                <h3>{$key|upper|replace:'_':' '}</h3>
                             </div>
                             <div class="overview-card-detail">
                                 <p>{$item->used} <b>{if $key == 'cores'} {$LANG['cores']} {elseif $key == 'gpus'} {$LANG['no_of_cards']} {else} {$LANG['storage_GB']} {/if}</b> {if $item->available == -1} {$LANG['infinity']} {else} ({$item->percent}%) {/if}</p>
