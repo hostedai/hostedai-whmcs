@@ -158,6 +158,10 @@ class Helper
             // For testing: Uncomment below to use current month instead
             // $start_date = date('Y-m-01'); // First day of current month
             // $end_date = date('Y-m-d');    // Today
+            
+            // For testing: Uncomment below to match UI date range (full year)
+            // $start_date = '2024-10-01'; // Match UI start date
+            // $end_date = '2025-09-30';   // Match UI end date
 
             $endPoint = "team-billing/group-by-workspace/" . $teamid . "/" . $start_date . "/" . $end_date . "/monthly";
             
@@ -223,11 +227,19 @@ class Helper
     {
         try {
             if (!$start_date) {
-                // For testing: use current month instead of last month
-                $start_date = date('Y-m-01'); // First day of current month
+                // Production: Bill for last month
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+                // For testing: Uncomment below to use current month instead
+                // $start_date = date('Y-m-01'); // First day of current month
+                // For testing: Uncomment below to match UI date range (full year)
+                // $start_date = '2024-10-01'; // Match UI start date
             }
             if (!$end_date) {
-                $end_date = date('Y-m-d');    // Today
+                $end_date = date('Y-m-t', strtotime('last month'));
+                // For testing: Uncomment below to use current month instead
+                // $end_date = date('Y-m-d');    // Today
+                // For testing: Uncomment below to match UI date range (full year)
+                // $end_date = '2025-09-30';   // Match UI end date
             }
 
             $endPoint = "team-billing/shared-storage/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
@@ -246,11 +258,19 @@ class Helper
     {
         try {
             if (!$start_date) {
-                // For testing: use current month instead of last month
-                $start_date = date('Y-m-01'); // First day of current month
+                // Production: Bill for last month
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+                // For testing: Uncomment below to use current month instead
+                // $start_date = date('Y-m-01'); // First day of current month
+                // For testing: Uncomment below to match UI date range (full year)
+                // $start_date = '2024-10-01'; // Match UI start date
             }
             if (!$end_date) {
-                $end_date = date('Y-m-d');    // Today
+                $end_date = date('Y-m-t', strtotime('last month'));
+                // For testing: Uncomment below to use current month instead
+                // $end_date = date('Y-m-d');    // Today
+                // For testing: Uncomment below to match UI date range (full year)
+                // $end_date = '2025-09-30';   // Match UI end date
             }
 
             $endPoint = "team-billing/gpuaas-pool/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
