@@ -151,7 +151,8 @@ try {
                         $intervalsArray = (array)$cardData;
                         $interval = reset($intervalsArray);
                         
-                        $totalHours = number_format($interval->total_hours ?? 0, 2);
+                        $totalHoursDecimal = $interval->total_hours ?? 0;
+                        $totalHoursFormatted = $helper->formatHoursMinutes($totalHoursDecimal);
                         $totalCost = number_format($interval->total_cost ?? 0, 2);
                         
                         // Get VM usage details
@@ -159,15 +160,16 @@ try {
                         if (!empty($interval->vm_usage)) {
                             foreach ($interval->vm_usage as $vmUsage) {
                                 $vmId = $vmUsage->VMID ?? 'Unknown';
-                                $vmHours = number_format($vmUsage->Hours ?? 0, 2);
+                                $vmHoursDecimal = $vmUsage->Hours ?? 0;
+                                $vmHoursFormatted = $helper->formatHoursMinutes($vmHoursDecimal);
                                 $vmCost = number_format($vmUsage->Cost ?? 0, 2);
-                                $vmUsageDetails .= "\n                        VM {$vmId}: {$vmHours} hrs (\${$vmCost})";
+                                $vmUsageDetails .= "\n                        VM {$vmId}: {$vmHoursFormatted} (\${$vmCost})";
                             }
                         }
 
                         $description = <<<DESC
                         GPU Card: {$cardId}
-                        Total Hours ............................. {$totalHours} hrs{$vmUsageDetails}
+                        Total Hours ............................. {$totalHoursFormatted}{$vmUsageDetails}
                         DESC;
 
                         $invoiceItems["itemdescription{$itemCount}"] = $description;
@@ -231,12 +233,13 @@ try {
                         $interval = reset($volumeArray);
                         
                         $cost = number_format($interval->cost ?? 0, 2);
-                        $hours = number_format($interval->hours ?? 0, 2);
+                        $hoursDecimal = $interval->hours ?? 0;
+                        $hoursFormatted = $helper->formatHoursMinutes($hoursDecimal);
                         
                         if ($cost > 0) {
                             $description = <<<DESC
                             Shared Storage: {$volumeName}
-                            Hours ................................... {$hours} hrs
+                            Hours ................................... {$hoursFormatted}
                             Cost .................................... \$ {$cost}
                             DESC;
 
@@ -272,7 +275,8 @@ try {
                         $ephemeralStorageCost = number_format($interval->EphimeralStorage->cost ?? 0, 2);
                         $cpuCost = number_format($interval->CPU->cost ?? 0, 2);
                         $ramCost = number_format($interval->RAM->cost ?? 0, 2);
-                        $intervalHours = number_format($interval->interval_hours ?? 0, 2);
+                        $intervalHoursDecimal = $interval->interval_hours ?? 0;
+                        $intervalHoursFormatted = $helper->formatHoursMinutes($intervalHoursDecimal);
                         $totalCost = number_format($interval->interval_cost ?? 0, 2);
 
                         if ($totalCost > 0) {
@@ -284,7 +288,7 @@ try {
                             CPU Usage ............................... \$ {$cpuCost}
                             RAM Usage ............................... \$ {$ramCost}
                             Ephemeral Storage ....................... \$ {$ephemeralStorageCost}
-                            Pool Hours .............................. {$intervalHours} hrs
+                            Pool Hours .............................. {$intervalHoursFormatted}
                             DESC;
 
                             $invoiceItems["itemdescription{$itemCount}"] = $description;

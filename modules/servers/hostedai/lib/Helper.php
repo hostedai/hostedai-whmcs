@@ -11,6 +11,25 @@ class Helper
 {
     public $baseUrl = '';
     public $token = '';
+
+    /**
+     * Convert decimal hours to hours:minutes format
+     * @param float $decimalHours
+     * @return string
+     */
+    public function formatHoursMinutes($decimalHours)
+    {
+        $hours = floor($decimalHours);
+        $minutes = round(($decimalHours - $hours) * 60);
+        
+        // Handle edge case where rounding gives 60 minutes
+        if ($minutes >= 60) {
+            $hours += 1;
+            $minutes = 0;
+        }
+        
+        return sprintf('%d:%02d', $hours, $minutes);
+    }
     public $key = '';
     public $method = 'GET';
     public $data = [];
