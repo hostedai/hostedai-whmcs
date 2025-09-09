@@ -155,12 +155,17 @@ class Helper
             $end_date = date('Y-m-t', strtotime('last month'));
 
             $endPoint = "team-billing/group-by-workspace/" . $teamid . "/" . $start_date . "/" . $end_date . "/monthly";
+            
+            // Debug logging
+            logActivity("DEBUG generateBill: TeamID={$teamid}, StartDate={$start_date}, EndDate={$end_date}");
+            logActivity("DEBUG generateBill: Full URL=" . $this->baseUrl . $endPoint);
 
             $curlResponse = $this->curlCall("GET", '', "generateBill", $endPoint);
 
             return $curlResponse;
         } catch (Exception $e) {
-            logActivity('Unable to Generate the bill, Error: ', $e->getMessage());
+            logActivity('Unable to Generate the bill, Error: ' . $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
         }
     }
 
@@ -479,6 +484,19 @@ class Helper
         $response = curl_exec($curl);
 
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($curl);
+
+        // Debug logging
+        logActivity("DEBUG curlCall: URL=" . $baseUrl . $endpoint . ", Method={$method}, HTTPCode={$httpCode}");
+        if ($curl_error) {
+            logActivity("DEBUG curlCall: CURL Error={$curl_error}");
+        }
+        if ($httpCode >= 400) {
+            logActivity("DEBUG curlCall: Response Body=" . substr($response, 0, 500));
+        }
+        if (empty($this->token)) {
+            logActivity("DEBUG curlCall: WARNING - No API token configured!");
+        }
 
         if (curl_errno($curl)) {
             throw new \Exception(curl_error($curl));

@@ -18,12 +18,23 @@ $helper = new Helper();
 try {
     logActivity("HostedAI Cron started on " . date('Y-m-d H:i:s'));
 
-    if (date('d') == '01') {
+    // Debug mode - set to true to run on any day for testing
+    $debug_mode = true;
+    
+    if (date('d') == '01' || $debug_mode) {
+        if ($debug_mode) {
+            logActivity("DEBUG MODE: Running invoice generation on day " . date('d') . " instead of 1st");
+        }
 
         // Generate bills and create invoices
         $teams = Capsule::table('mod_hostdaiteam_details')->get();
 
         foreach ($teams as $team) {
+            // Debug: Log API configuration
+            logActivity("DEBUG: Processing TeamID {$team->teamid}");
+            logActivity("DEBUG: API Base URL: " . $helper->baseUrl);
+            logActivity("DEBUG: API Token configured: " . (!empty($helper->token) ? 'Yes' : 'No'));
+            
             $response = $helper->generateBill($team->teamid);
             logActivity("Billing response for TeamID {$team->teamid}: " . json_encode($response));
 
@@ -207,7 +218,9 @@ try {
             }
 
             // ALWAYS process Shared Storage billing (regardless of main billing status)
-            $sharedStorageResponse = $helper->getTeamSharedStorageBilling($team->teamid);
+            // TODO: Deploy updated Helper.php with getTeamSharedStorageBilling method
+            // $sharedStorageResponse = $helper->getTeamSharedStorageBilling($team->teamid);
+            $sharedStorageResponse = ['httpcode' => 404, 'result' => null]; // Temporary fallback
             if ($sharedStorageResponse['httpcode'] === 200 && !empty($sharedStorageResponse['result'])) {
                 $sharedStorageData = $sharedStorageResponse['result'];
                 logActivity("Shared storage billing for TeamID {$team->teamid}: " . json_encode($sharedStorageData));
@@ -241,7 +254,9 @@ try {
             }
 
             // ALWAYS process Enhanced GPUaaS Pool billing with Ephemeral Storage (regardless of main billing status)
-            $gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($team->teamid);
+            // TODO: Deploy updated Helper.php with getTeamGpuaasPoolBilling method
+            // $gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($team->teamid);
+            $gpuaasPoolResponse = ['httpcode' => 404, 'result' => null]; // Temporary fallback
             if ($gpuaasPoolResponse['httpcode'] === 200 && !empty($gpuaasPoolResponse['result'])) {
                 $gpuaasPoolData = $gpuaasPoolResponse['result'];
                 logActivity("GPUaaS pool billing for TeamID {$team->teamid}: " . json_encode($gpuaasPoolData));
