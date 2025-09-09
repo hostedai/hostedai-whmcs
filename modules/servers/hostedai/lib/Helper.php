@@ -151,8 +151,13 @@ class Helper
     {
         try {
 
+            // Production: Bill for last month
             $start_date = date('Y-m-01', strtotime('first day of last month'));
             $end_date = date('Y-m-t', strtotime('last month'));
+            
+            // For testing: Uncomment below to use current month instead
+            // $start_date = date('Y-m-01'); // First day of current month
+            // $end_date = date('Y-m-d');    // Today
 
             $endPoint = "team-billing/group-by-workspace/" . $teamid . "/" . $start_date . "/" . $end_date . "/monthly";
             
@@ -218,10 +223,11 @@ class Helper
     {
         try {
             if (!$start_date) {
-                $start_date = date('Y-m-01', strtotime('first day of last month'));
+                // For testing: use current month instead of last month
+                $start_date = date('Y-m-01'); // First day of current month
             }
             if (!$end_date) {
-                $end_date = date('Y-m-t', strtotime('last month'));
+                $end_date = date('Y-m-d');    // Today
             }
 
             $endPoint = "team-billing/shared-storage/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
@@ -240,10 +246,11 @@ class Helper
     {
         try {
             if (!$start_date) {
-                $start_date = date('Y-m-01', strtotime('first day of last month'));
+                // For testing: use current month instead of last month
+                $start_date = date('Y-m-01'); // First day of current month
             }
             if (!$end_date) {
-                $end_date = date('Y-m-t', strtotime('last month'));
+                $end_date = date('Y-m-d');    // Today
             }
 
             $endPoint = "team-billing/gpuaas-pool/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
