@@ -198,6 +198,7 @@ try {
                         $itemCount++;
                     }
                 }
+                }
                 } else {
                     logActivity("No workspace billing data found for TeamID {$team->teamid}");
                 }
