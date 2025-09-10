@@ -19,7 +19,7 @@ try {
     logActivity("HostedAI Cron started on " . date('Y-m-d H:i:s'));
 
     // Debug mode - set to true to run on any day for testing
-    $debug_mode = true;
+    $debug_mode = false; // PRODUCTION: Always false for security
     
     if (date('d') == '01' || $debug_mode) {
         if ($debug_mode) {
@@ -30,10 +30,8 @@ try {
         $teams = Capsule::table('mod_hostdaiteam_details')->get();
 
         foreach ($teams as $team) {
-            // Debug: Log API configuration
-            logActivity("DEBUG: Processing TeamID {$team->teamid}");
-            logActivity("DEBUG: API Base URL: " . $helper->baseUrl);
-            logActivity("DEBUG: API Token configured: " . (!empty($helper->token) ? 'Yes' : 'No'));
+            // Production: Basic processing log (debug info removed for security)
+            logActivity("Processing billing for TeamID {$team->teamid}");
             
             $response = $helper->generateBill($team->teamid);
             logActivity("Billing response for TeamID {$team->teamid}: " . json_encode($response));

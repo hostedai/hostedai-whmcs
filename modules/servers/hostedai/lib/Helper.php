@@ -184,9 +184,9 @@ class Helper
 
             $endPoint = "team-billing/group-by-workspace/" . $teamid . "/" . $start_date . "/" . $end_date . "/monthly";
             
-            // Debug logging
-            logActivity("DEBUG generateBill: TeamID={$teamid}, StartDate={$start_date}, EndDate={$end_date}");
-            logActivity("DEBUG generateBill: Full URL=" . $this->baseUrl . $endPoint);
+            // Debug logging (disabled in production for security)
+            // logActivity("DEBUG generateBill: TeamID={$teamid}, StartDate={$start_date}, EndDate={$end_date}");
+            // logActivity("DEBUG generateBill: Full URL=" . $this->baseUrl . $endPoint);
 
             $curlResponse = $this->curlCall("GET", '', "generateBill", $endPoint);
 
@@ -532,16 +532,16 @@ class Helper
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $curl_error = curl_error($curl);
 
-        // Debug logging
-        logActivity("DEBUG curlCall: URL=" . $baseUrl . $endpoint . ", Method={$method}, HTTPCode={$httpCode}");
+        // Debug logging (disabled in production for security)
+        // logActivity("DEBUG curlCall: URL=" . $baseUrl . $endpoint . ", Method={$method}, HTTPCode={$httpCode}");
         if ($curl_error) {
-            logActivity("DEBUG curlCall: CURL Error={$curl_error}");
+            logActivity("CURL Error: Connection failed"); // Sanitized error logging
         }
         if ($httpCode >= 400) {
-            logActivity("DEBUG curlCall: Response Body=" . substr($response, 0, 500));
+            logActivity("API Error: HTTP {$httpCode}"); // Sanitized error logging
         }
         if (empty($this->token)) {
-            logActivity("DEBUG curlCall: WARNING - No API token configured!");
+            logActivity("Configuration Error: API token not configured");
         }
 
         if (curl_errno($curl)) {
