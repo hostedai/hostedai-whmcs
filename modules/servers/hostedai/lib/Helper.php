@@ -174,13 +174,23 @@ class Helper
             $start_date = date('Y-m-01', strtotime('first day of last month'));
             $end_date = date('Y-m-t', strtotime('last month'));
             
-            // For testing: Uncomment below to use current month instead
+            // TESTING OPTIONS: Uncomment ONE of the options below for testing
+            
+            // Option 1: Current month to date
             // $start_date = date('Y-m-01'); // First day of current month
             // $end_date = date('Y-m-d');    // Today
             
-            // For testing: Uncomment below to match UI date range (full year)
+            // Option 2: Full UI date range (captures all historical usage)
             // $start_date = '2024-10-01'; // Match UI start date
             // $end_date = '2025-09-30';   // Match UI end date
+            
+            // Option 3: Custom date range (modify dates as needed)
+            // $start_date = '2024-09-01'; // Custom start date
+            // $end_date = '2024-09-30';   // Custom end date
+            
+            // Option 4: Previous month (alternative to production default)
+            // $start_date = date('Y-m-01', strtotime('first day of -2 months'));
+            // $end_date = date('Y-m-t', strtotime('-2 months'));
 
             $endPoint = "team-billing/group-by-workspace/" . $teamid . "/" . $start_date . "/" . $end_date . "/monthly";
             

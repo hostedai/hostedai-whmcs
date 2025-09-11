@@ -21,6 +21,9 @@ try {
     // Debug mode - set to true to run on any day for testing
     $debug_mode = false; // PRODUCTION: Always false for security
     
+    // TESTING: Uncomment below to enable daily execution for testing
+    // $debug_mode = true; // TESTING ONLY - allows cron to run on any day
+    
     if (date('d') == '01' || $debug_mode) {
         if ($debug_mode) {
             logActivity("DEBUG MODE: Running invoice generation on day " . date('d') . " instead of 1st");
