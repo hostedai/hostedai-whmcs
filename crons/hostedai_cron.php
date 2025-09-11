@@ -218,9 +218,7 @@ try {
             }
 
             // ALWAYS process Shared Storage billing (regardless of main billing status)
-            // TODO: Deploy updated Helper.php with getTeamSharedStorageBilling method
-            // $sharedStorageResponse = $helper->getTeamSharedStorageBilling($team->teamid);
-            $sharedStorageResponse = ['httpcode' => 404, 'result' => null]; // Temporary fallback
+            $sharedStorageResponse = $helper->getTeamSharedStorageBilling($team->teamid);
             if ($sharedStorageResponse['httpcode'] === 200 && !empty($sharedStorageResponse['result'])) {
                 $sharedStorageData = $sharedStorageResponse['result'];
                 logActivity("Shared storage billing for TeamID {$team->teamid}: " . json_encode($sharedStorageData));
@@ -255,9 +253,7 @@ try {
             }
 
             // ALWAYS process Enhanced GPUaaS Pool billing with Ephemeral Storage (regardless of main billing status)
-            // TODO: Deploy updated Helper.php with getTeamGpuaasPoolBilling method
-            // $gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($team->teamid);
-            $gpuaasPoolResponse = ['httpcode' => 404, 'result' => null]; // Temporary fallback
+            $gpuaasPoolResponse = $helper->getTeamGpuaasPoolBilling($team->teamid);
             if ($gpuaasPoolResponse['httpcode'] === 200 && !empty($gpuaasPoolResponse['result'])) {
                 $gpuaasPoolData = $gpuaasPoolResponse['result'];
                 logActivity("GPUaaS pool billing for TeamID {$team->teamid}: " . json_encode($gpuaasPoolData));
