@@ -63,7 +63,7 @@ try {
                 if (isset($responseData->monthly_cost) && $responseData->monthly_cost > 0) {
                     $monthlyCost = number_format($responseData->monthly_cost, 2);
                     $invoiceItems["itemdescription{$itemCount}"] = "Monthly Base Service Fee";
-                    $invoiceItems["itemamount{$itemCount}"] = $monthlyCost;
+                    $invoiceItems["itemamount{$itemCount}"] = $responseData->monthly_cost; // Use raw float for invoice
                     $invoiceItems["itemtaxed{$itemCount}"] = true;
                     $totalWithoutTax += $responseData->monthly_cost;
                     $itemCount++;
@@ -107,7 +107,7 @@ try {
                                         DESC;
                 
                         $invoiceItems["itemdescription{$itemCount}"] = $description;
-                        $invoiceItems["itemamount{$itemCount}"] = $instanceTotal;
+                        $invoiceItems["itemamount{$itemCount}"] = $monthData->total_cost; // Use raw float for invoice
                         $invoiceItems["itemtaxed{$itemCount}"] = true;
                 
                         $totalWithoutTax += $monthData->total_cost;
@@ -138,7 +138,7 @@ try {
                         DESC;
 
                         $invoiceItems["itemdescription{$itemCount}"] = $description;
-                        $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                        $invoiceItems["itemamount{$itemCount}"] = $interval->total_cost; // Use raw float for invoice
                         $invoiceItems["itemtaxed{$itemCount}"] = true;
 
                         $totalWithoutTax += $interval->total_cost;
@@ -174,7 +174,7 @@ try {
                         DESC;
 
                         $invoiceItems["itemdescription{$itemCount}"] = $description;
-                        $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                        $invoiceItems["itemamount{$itemCount}"] = $interval->total_cost; // Use raw float for invoice
                         $invoiceItems["itemtaxed{$itemCount}"] = true;
 
                         $totalWithoutTax += $interval->total_cost;
@@ -205,7 +205,7 @@ try {
                         DESC;
 
                         $invoiceItems["itemdescription{$itemCount}"] = $description;
-                        $invoiceItems["itemamount{$itemCount}"] = $teamTotal;
+                        $invoiceItems["itemamount{$itemCount}"] = $teamMetricsInterval->total_cost; // Use raw float for invoice
                         $invoiceItems["itemtaxed{$itemCount}"] = true;
 
                         $totalWithoutTax += $teamMetricsInterval->total_cost;
@@ -243,7 +243,7 @@ try {
                             DESC;
 
                             $invoiceItems["itemdescription{$itemCount}"] = $description;
-                            $invoiceItems["itemamount{$itemCount}"] = $cost;
+                            $invoiceItems["itemamount{$itemCount}"] = $interval->cost; // Use raw float for invoice
                             $invoiceItems["itemtaxed{$itemCount}"] = true;
 
                             $totalWithoutTax += $interval->cost;
@@ -289,7 +289,7 @@ try {
                             DESC;
 
                             $invoiceItems["itemdescription{$itemCount}"] = $description;
-                            $invoiceItems["itemamount{$itemCount}"] = $totalCost;
+                            $invoiceItems["itemamount{$itemCount}"] = $interval->interval_cost; // Use raw float for invoice
                             $invoiceItems["itemtaxed{$itemCount}"] = true;
 
                             $totalWithoutTax += $interval->interval_cost;
