@@ -304,15 +304,32 @@ class Helper
     }
 
     /* Generate Invoice */
-    public function createInvoice($id, $invoice)
+    public function createInvoice($id, $invoice, $currencyCode = null)
     {
         try {
             $command = 'CreateInvoice';
-            $postData = array_merge([
+            $postData = [
                 'userid' => $id,
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
-            ], $invoice);
+            ];
+            
+            // Add currency if provided by API
+            if ($currencyCode && $currencyCode !== 'USD') {
+                // Get WHMCS currency ID for the currency code
+                $currencyId = \WHMCS\Database\Capsule::table('tblcurrencies')
+                    ->where('code', $currencyCode)
+                    ->value('id');
+                    
+                if ($currencyId) {
+                    $postData['currency'] = $currencyId;
+                    logActivity("Invoice created with currency: {$currencyCode} (ID: {$currencyId})");
+                } else {
+                    logActivity("Warning: Currency {$currencyCode} not found in WHMCS, using default currency");
+                }
+            }
+            
+            $postData = array_merge($postData, $invoice);
 
             $results = localAPI($command, $postData);
             return $results;

@@ -301,7 +301,7 @@ try {
             // Generate Invoice only if there are any costs
             if ($totalWithoutTax > 0) {
                 logActivity("Creating invoice for TeamID {$team->teamid} with total amount: \${$totalWithoutTax}");
-                $invoiceResult = $helper->createInvoice($team->uid, $invoiceItems);
+                $invoiceResult = $helper->createInvoice($team->uid, $invoiceItems, $currencyCode);
                 logActivity("Invoice creation response for UID {$team->uid}: " . json_encode($invoiceResult));
                 if (isset($invoiceResult['result']) && $invoiceResult['result'] === 'success') {
                     $helper->insert_teamDetail($team->uid, $team->sid, $team->pid, $invoiceResult['invoiceid'], "update");
