@@ -194,10 +194,8 @@ class Helper
 
             $endPoint = "team-billing/group-by-workspace/" . $teamid . "/" . $start_date . "/" . $end_date . "/monthly";
             
-            // Basic date logging (safe for production)
-            logActivity("Billing period: {$start_date} to {$end_date} for TeamID {$teamid}");
-            
             // Debug logging (disabled in production for security)
+            // logActivity("DEBUG generateBill: TeamID={$teamid}, StartDate={$start_date}, EndDate={$end_date}");
             // logActivity("DEBUG generateBill: Full URL=" . $this->baseUrl . $endPoint);
 
             $curlResponse = $this->curlCall("GET", '', "generateBill", $endPoint);
