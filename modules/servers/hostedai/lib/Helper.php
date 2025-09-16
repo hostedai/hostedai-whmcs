@@ -11,6 +11,25 @@ class Helper
 {
     public $baseUrl = '';
     public $token = '';
+
+    /**
+     * Convert decimal hours to hours:minutes format
+     * @param float $decimalHours
+     * @return string
+     */
+    public function formatHoursMinutes($decimalHours)
+    {
+        $hours = floor($decimalHours);
+        $minutes = round(($decimalHours - $hours) * 60);
+        
+        // Handle edge case where rounding gives 60 minutes
+        if ($minutes >= 60) {
+            $hours += 1;
+            $minutes = 0;
+        }
+        
+        return sprintf('%d:%02d', $hours, $minutes);
+    }
     public $key = '';
     public $method = 'GET';
     public $data = [];
@@ -151,29 +170,176 @@ class Helper
     {
         try {
 
+            // Production: Bill for last month
             $start_date = date('Y-m-01', strtotime('first day of last month'));
             $end_date = date('Y-m-t', strtotime('last month'));
+            
+            // TESTING OPTIONS: Uncomment ONE of the options below for testing
+            
+            // Option 1: Current month to date
+            // $start_date = date('Y-m-01'); // First day of current month
+            // $end_date = date('Y-m-d');    // Today
+            
+            // Option 2: Full UI date range (captures all historical usage)
+            // $start_date = '2024-10-01'; // Match UI start date
+            // $end_date = '2025-09-30';   // Match UI end date
+            
+            // Option 3: Custom date range (modify dates as needed)
+            // $start_date = '2024-09-01'; // Custom start date
+            // $end_date = '2024-09-30';   // Custom end date
+            
+            // Option 4: Previous month (alternative to production default)
+            // $start_date = date('Y-m-01', strtotime('first day of -2 months'));
+            // $end_date = date('Y-m-t', strtotime('-2 months'));
 
             $endPoint = "team-billing/group-by-workspace/" . $teamid . "/" . $start_date . "/" . $end_date . "/monthly";
+            
+            // Debug logging (disabled in production for security)
+            // logActivity("DEBUG generateBill: TeamID={$teamid}, StartDate={$start_date}, EndDate={$end_date}");
+            // logActivity("DEBUG generateBill: Full URL=" . $this->baseUrl . $endPoint);
 
             $curlResponse = $this->curlCall("GET", '', "generateBill", $endPoint);
 
             return $curlResponse;
         } catch (Exception $e) {
-            logActivity('Unable to Generate the bill, Error: ', $e->getMessage());
+            logActivity('Unable to Generate the bill, Error: ' . $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
+    /* Generate Detailed Team Bill with enhanced data */
+    public function generateDetailedTeamBill($teamid, $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+            }
+
+            $endPoint = "team-billing/" . $teamid . "/" . $start_date . "/" . $end_date . "/" . $interval;
+
+            $curlResponse = $this->curlCall("GET", '', "generateDetailedTeamBill", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Generate detailed team bill, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
+    /* Get Workspace Billing */
+    public function getWorkspaceBilling($workspaceId, $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+            }
+
+            $endPoint = "workspace-billing/" . $workspaceId . "/" . $start_date . "/" . $end_date . "/" . $interval;
+
+            $curlResponse = $this->curlCall("GET", '', "getWorkspaceBilling", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Get workspace billing, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
+    /* Get Shared Storage Billing for Team by Region */
+    public function getTeamSharedStorageBilling($teamId, $regionId = 'all', $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                // Production: Bill for last month
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+                // For testing: Uncomment below to use current month instead
+                // $start_date = date('Y-m-01'); // First day of current month
+                // For testing: Uncomment below to match UI date range (full year)
+                // $start_date = '2024-10-01'; // Match UI start date
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+                // For testing: Uncomment below to use current month instead
+                // $end_date = date('Y-m-d');    // Today
+                // For testing: Uncomment below to match UI date range (full year)
+                // $end_date = '2025-09-30';   // Match UI end date
+            }
+
+            $endPoint = "team-billing/shared-storage/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
+
+            $curlResponse = $this->curlCall("GET", '', "getTeamSharedStorageBilling", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Get shared storage billing, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
+    /* Get GPUaaS Pool Billing for Team by Region */
+    public function getTeamGpuaasPoolBilling($teamId, $regionId = 'all', $start_date = null, $end_date = null, $interval = 'monthly')
+    {
+        try {
+            if (!$start_date) {
+                // Production: Bill for last month
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+                // For testing: Uncomment below to use current month instead
+                // $start_date = date('Y-m-01'); // First day of current month
+                // For testing: Uncomment below to match UI date range (full year)
+                // $start_date = '2024-10-01'; // Match UI start date
+            }
+            if (!$end_date) {
+                $end_date = date('Y-m-t', strtotime('last month'));
+                // For testing: Uncomment below to use current month instead
+                // $end_date = date('Y-m-d');    // Today
+                // For testing: Uncomment below to match UI date range (full year)
+                // $end_date = '2025-09-30';   // Match UI end date
+            }
+
+            $endPoint = "team-billing/gpuaas-pool/" . $teamId . "/" . $start_date . "/" . $end_date . "/" . $interval . "/" . $regionId;
+
+            $curlResponse = $this->curlCall("GET", '', "getTeamGpuaasPoolBilling", $endPoint);
+
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to Get GPUaaS pool billing, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
         }
     }
 
     /* Generate Invoice */
-    public function createInvoice($id, $invoice)
+    public function createInvoice($id, $invoice, $currencyCode = null)
     {
         try {
             $command = 'CreateInvoice';
-            $postData = array_merge([
+            $postData = [
                 'userid' => $id,
                 'date' => date('Y-m-d'),
                 'duedate' => date('Y-m-d', strtotime('+7 days')),
-            ], $invoice);
+            ];
+            
+            // Add currency if provided by API
+            if ($currencyCode && $currencyCode !== 'USD') {
+                // Get WHMCS currency ID for the currency code
+                $currencyId = \WHMCS\Database\Capsule::table('tblcurrencies')
+                    ->where('code', $currencyCode)
+                    ->value('id');
+                    
+                if ($currencyId) {
+                    $postData['currency'] = $currencyId;
+                    logActivity("Invoice created with currency: {$currencyCode} (ID: {$currencyId})");
+                } else {
+                    logActivity("Warning: Currency {$currencyCode} not found in WHMCS, using default currency");
+                }
+            }
+            
+            $postData = array_merge($postData, $invoice);
 
             $results = localAPI($command, $postData);
             return $results;
@@ -391,6 +557,19 @@ class Helper
         $response = curl_exec($curl);
 
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($curl);
+
+        // Debug logging (disabled in production for security)
+        // logActivity("DEBUG curlCall: URL=" . $baseUrl . $endpoint . ", Method={$method}, HTTPCode={$httpCode}");
+        if ($curl_error) {
+            logActivity("CURL Error: Connection failed"); // Sanitized error logging
+        }
+        if ($httpCode >= 400) {
+            logActivity("API Error: HTTP {$httpCode}"); // Sanitized error logging
+        }
+        if (empty($this->token)) {
+            logActivity("Configuration Error: API token not configured");
+        }
 
         if (curl_errno($curl)) {
             throw new \Exception(curl_error($curl));

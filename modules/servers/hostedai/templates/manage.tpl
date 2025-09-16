@@ -6,7 +6,7 @@
 <div class="container">
 
     <div class="panel panel-primary">
-        <div class="panel-heading"><p>Overview</p> <a href="{$loginURL}" target="_blank" class="btn btn-primary">Login</a> </div>
+        <div class="panel-heading"><p>Overview</p> <a href="{if strpos($loginURL, 'http') !== 0}https://{/if}{$loginURL}" target="_blank" class="btn btn-primary">Login</a> </div>
         <div class="panel-body overview-main">
             <div class="row">
                 {foreach from=$resourcesData key=key item=item}
@@ -14,7 +14,7 @@
                         <div class="overview-card">
                             <div class="overview-card-header">
                                 <img src="{$assets}/images/{$key}.svg" alt="{$key}">
-                                <h3>{$key|upper}</h3>
+                                <h3>{$key|upper|replace:'_':' '}</h3>
                             </div>
                             <div class="overview-card-detail">
                                 <p>{$item->used} <b>{if $key == 'cores'} {$LANG['cores']} {elseif $key == 'gpus'} {$LANG['no_of_cards']} {else} {$LANG['storage_GB']} {/if}</b> {if $item->available == -1} {$LANG['infinity']} {else} ({$item->percent}%) {/if}</p>
