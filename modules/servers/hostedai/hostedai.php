@@ -624,7 +624,7 @@ function hostedai_AdminServicesTabFields(array $params)
                                     <td style="width:50%" class="hading-td">
                                         <div class="hosting-information">
                                             <div class="panel panel-primary">
-                                                <div class="panel-heading"><p>Resource Overview</p> <p>'.$is_suspend.' <a href="'.$loginURL.'" target="_blank" class="btn btn-primary">Login</a></p> </div>
+                                                <div class="panel-heading"><p>Resource Overview</p> <p>'.$is_suspend.'</p> </div>
                                                 <div class="panel-body overview-main">
                                                     <div class="row">
                                                         '.$resourceHTML.'
@@ -749,6 +749,8 @@ function hostedai_ClientArea(array $params)
                             'teammembers' => $getTeamMembers ? $getTeamMembers['result']->members : '',
                             'resourcesData' => $resourceOverviewData,
                             'loginURL' => $loginURL,
+                            'serviceId' => $params['serviceid'],
+                            'userEmail' => $params['clientsdetails']['email'],
                             'assets' => $assets,
                             'LANG' => $_ADDONLANG
                         ),
