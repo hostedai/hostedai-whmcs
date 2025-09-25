@@ -1,11 +1,39 @@
 <?php
 
+// Set headers for AJAX response
+header('Content-Type: application/json');
+
+// Initialize WHMCS if not already done
+if (!defined('WHMCS')) {
+    $possiblePaths = [
+        dirname(dirname(dirname(dirname(__FILE__)))) . '/init.php',
+        '../../../init.php',
+        '../../../../init.php',
+        dirname($_SERVER['DOCUMENT_ROOT']) . '/init.php',
+        $_SERVER['DOCUMENT_ROOT'] . '/init.php'
+    ];
+    
+    $whmcsInitialized = false;
+    foreach ($possiblePaths as $path) {
+        if (file_exists($path)) {
+            require_once $path;
+            $whmcsInitialized = true;
+            break;
+        }
+    }
+    
+    if (!$whmcsInitialized) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'WHMCS initialization failed',
+            'debug' => 'Tried paths: ' . implode(', ', $possiblePaths)
+        ]);
+        exit;
+    }
+}
+
 use WHMCS\Module\Server\HosteDai\Helper;
 use WHMCS\Database\Capsule;
-
-if (!defined("WHMCS")) {
-    die("This file cannot be accessed directly");
-}
 
 // Handle AJAX requests
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -13,7 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($action === 'generate_otl') {
         generateOTL();
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Invalid action']);
     }
+} else {
+    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
 }
 
 function generateOTL() {

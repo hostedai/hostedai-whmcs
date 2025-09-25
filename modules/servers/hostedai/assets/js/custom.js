@@ -12,7 +12,7 @@ function generateOTLAndLogin(button, serviceId, userEmail, staticLoginUrl) {
     formData.append('user_email', userEmail);
     formData.append('static_login_url', staticLoginUrl);
     
-    fetch('/modules/servers/hostedai/lib/ajax.php', {
+    fetch('./modules/servers/hostedai/lib/ajax.php', {
         method: 'POST',
         body: formData
     })
@@ -48,6 +48,7 @@ function generateOTLAndLogin(button, serviceId, userEmail, staticLoginUrl) {
     })
     .catch(error => {
         console.error('OTL Generation Error:', error);
+        console.error('Error details:', error.message);
         button.textContent = 'Error occurred. Using standard login.';
         
         // Fallback to static URL
