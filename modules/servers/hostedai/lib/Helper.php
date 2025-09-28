@@ -66,7 +66,7 @@ class Helper
 
             $baseUrl = $this->baseUrl;
             $getUrl =  $baseUrl . $endPoint;
-            $curlResponse = $this->curlCall("GET", $getUrl, "getPolicyItems", $endPoint);
+            $curlResponse = $this->curlCall("GET", "getPolicyItems", $endPoint, $getUrl);
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -79,7 +79,7 @@ class Helper
     {
         try {
             $endPoint = 'team';
-            $curlResponse = $this->curlCall("POST", $apiData, "createHostedaiTeam", $endPoint);
+            $curlResponse = $this->curlCall("POST", "createHostedaiTeam", $endPoint, $apiData);
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -92,7 +92,7 @@ class Helper
     {
         try {
             $endPoint = 'team/' . $teamid;
-            $curlResponse = $this->curlCall("GET", '', "getTeamDetail", $endPoint);
+            $curlResponse = $this->curlCall("GET", "getTeamDetail", $endPoint, '');
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -105,7 +105,7 @@ class Helper
     {
         try {
             $endPoint = 'team/' . $teamid . '/members?page=1&itemsPerPage=50';
-            $curlResponse = $this->curlCall("GET", '', "getTeamMembers", $endPoint);
+            $curlResponse = $this->curlCall("GET", "getTeamMembers", $endPoint, '');
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -118,7 +118,7 @@ class Helper
     {
         try {
             $endPoint = 'team/' . $teamid . '/resource-overview';
-            $curlResponse = $this->curlCall("GET", '', "getTeamMembers", $endPoint);
+            $curlResponse = $this->curlCall("GET", "getResourceOverview", $endPoint, '');
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -131,7 +131,7 @@ class Helper
     {
         try {
             $endPoint = 'team/' . $teamid . '/suspend';
-            $curlResponse = $this->curlCall("POST", '', "suspendHostedaiTeam", $endPoint);
+            $curlResponse = $this->curlCall("POST", "suspendHostedaiTeam", $endPoint, '');
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -144,7 +144,7 @@ class Helper
     {
         try {
             $endPoint = 'team/' . $teamid . '/unsuspend';
-            $curlResponse = $this->curlCall("POST", '', "unsuspendHostedaiTeam", $endPoint);
+            $curlResponse = $this->curlCall("POST", "unsuspendHostedaiTeam", $endPoint, '');
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -157,7 +157,7 @@ class Helper
     {
         try {
             $endPoint = 'team/' . $teamid;
-            $curlResponse = $this->curlCall("DELETE", '', "terminateHostedaiTeam", $endPoint);
+            $curlResponse = $this->curlCall("DELETE", "terminateHostedaiTeam", $endPoint, '');
 
             return $curlResponse;
         } catch (Exception $e) {
@@ -518,8 +518,25 @@ class Helper
         }
     }
 
+    /** Create One Time Login Token */
+    public function createOneTimeLoginToken($userEmail)
+    {
+        try {
+            $endPoint = 'create-otl';
+            $data = [
+                'email' => $userEmail,
+                'send_email_invite' => false  // We just want the URL, not to send email
+            ];
+            $curlResponse = $this->curlCall("POST", "createOneTimeLoginToken", $endPoint, $data);
+            return $curlResponse;
+        } catch (Exception $e) {
+            logActivity('Unable to create OTL token, Error: ', $e->getMessage());
+            return ['httpcode' => 500, 'result' => null];
+        }
+    }
+
     /* Retrieve the Curl API response.*/
-    public function curlCall($method, $data = null, $action, $endpoint = null)
+    public function curlCall($method, $action, $endpoint = null, $data = null)
     {
 
         $baseUrl = $this->baseUrl;

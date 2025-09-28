@@ -22,8 +22,58 @@ function hostedai_ConfigOptions(array $params)
 {   
 
     global $whmcs;
-    $helper = new Helper();
+    
+    // Get the product ID
     $pid = $whmcs->get_req_var("id");
+    
+    // Try to get server information based on the product's server group
+    $serverParams = [];
+    
+    // Debug logging removed - functionality working correctly
+    
+    if ($pid) {
+        try {
+            // Get the product details
+            $product = Capsule::table('tblproducts')->where('id', $pid)->first();
+            
+            if ($product) {
+                $productServerGroup = $product->servergroup ?: 0;
+                
+                // Also check if servergroup is being passed in the request
+                $requestServerGroup = 0;
+                if (isset($_GET['servergroup']) && $_GET['servergroup']) {
+                    $requestServerGroup = $_GET['servergroup'];
+                }
+                
+                $serverGroupToUse = $requestServerGroup ?: $productServerGroup;
+                
+                if ($serverGroupToUse > 0) {
+                    // In WHMCS, server groups are managed through tblservergroupsrel table
+                    // We need to join tblservers with tblservergroupsrel to find servers in a group
+                    // Get enabled servers from the assigned server group
+                    $server = Capsule::table('tblservers')
+                        ->join('tblservergroupsrel', 'tblservers.id', '=', 'tblservergroupsrel.serverid')
+                        ->where('tblservergroupsrel.groupid', $serverGroupToUse)
+                        ->where('tblservers.type', 'hostedai')
+                        ->where('tblservers.disabled', 0)
+                        ->select('tblservers.*')
+                        ->first();
+                    
+                    if ($server) {
+                        $serverParams = [
+                            'serverhostname' => $server->hostname,
+                            'serverpassword' => decrypt($server->password)
+                        ];
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // Log error but continue with default behavior
+            logActivity('hostedai_ConfigOptions error', $e->getMessage());
+        }
+    }
+    
+    $helper = new Helper($serverParams);
 
     /** Get the API to fetch the pricing policy items */
     $getPricingPolicy = $helper->getPolicyItems('pricing-policy');
@@ -624,7 +674,7 @@ function hostedai_AdminServicesTabFields(array $params)
                                     <td style="width:50%" class="hading-td">
                                         <div class="hosting-information">
                                             <div class="panel panel-primary">
-                                                <div class="panel-heading"><p>Resource Overview</p> <p>'.$is_suspend.' <a href="'.$loginURL.'" target="_blank" class="btn btn-primary">Login</a></p> </div>
+                                                <div class="panel-heading"><p>Resource Overview</p> <p>'.$is_suspend.'</p> </div>
                                                 <div class="panel-body overview-main">
                                                     <div class="row">
                                                         '.$resourceHTML.'
@@ -749,6 +799,8 @@ function hostedai_ClientArea(array $params)
                             'teammembers' => $getTeamMembers ? $getTeamMembers['result']->members : '',
                             'resourcesData' => $resourceOverviewData,
                             'loginURL' => $loginURL,
+                            'serviceId' => $params['serviceid'],
+                            'userEmail' => $params['clientsdetails']['email'],
                             'assets' => $assets,
                             'LANG' => $_ADDONLANG
                         ),
