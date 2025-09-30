@@ -73,7 +73,7 @@ Next search for:
 
 Add a new server in WHMCS. This sets up the connection between WHMCS and the hosted·ai platform.
 
-**If you haven't already, generate an [API Token](/hostedai-dg3zjz/hostedai-user-guide-td5q2c/user-panel/account-settings-22t5%5Fc/security/manage-api-tokens) as you'll need it for the next steps**
+**If you haven't already, generate an [API Token](https://docs.hosted.ai/user-panel/account-settings-22t5_c/security/manage-api-tokens) as you'll need it for the next steps**
 
 Navigate to _System Settings_ \-> _Servers_ \-> _Add New Server_.
 
